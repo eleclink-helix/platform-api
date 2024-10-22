@@ -1,0 +1,5444 @@
+openapi: 3.0.3
+info:
+  title: Platform API
+  description: |
+    _OpenAPI specification for the **Platform API** of **Helix**, the nomination platform of ElecLink_
+
+    ---
+
+    Additional documentation available in the API's [GitHub repository](https://github.com/eleclink-helix/platform-api)
+  version: 0.0.111
+  contact:
+    name: ElecLink
+    url: https://www.eleclink.co.uk
+    email: team.eleclink@eleclink.co.uk
+  termsOfService: TBD
+servers:
+  - description: PRODUCTION
+    url: https://api.helix.eleclink.co.uk
+  - description: TRAINING
+    url: https://api.training.helix.eleclink.co.uk
+tags:
+  - name: metadata
+    description: Metadata endpoints
+  - name: attachment
+    description: Attachments
+  - name: audit-log
+    description: Audit Logs
+  - name: default-nomination
+    description: Default Nominations
+  - name: manual-file-upload
+    description: Manual File Upload
+  - name: messages
+    description: Messages
+  - name: nomination-gate
+    description: Nomination Gates
+  - name: nomination
+    description: Nominations
+  - name: organisation
+    description: Organisations
+  - name: participant-dashboard
+    description: Participant Dashboard
+  - name: participant-overview
+    description: Participant Overview
+  - name: profile
+    description: Profile
+  - name: public-overview
+    description: Public / Overview
+  - name: reporting
+    description: Reporting
+  - name: transmission-right
+    description: Transmission Rights
+  - name: user
+    description: Users
+paths:
+  /v1/public/version:
+    get:
+      operationId: getVersion
+      description: |
+        Fetch the current version of the Platform Backend and API in MAJOR.MINOR.PATCH format
+      tags:
+        - metadata
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Version'
+  /v1/attachments:
+    post:
+      operationId: uploadAttachment
+      description: |-
+        Upload a single Attachment (file)
+
+        On successful upload the file gets persisted and metadata for the Attachment is returned. The Attachment can be referenced by its identifier in other functions (e.g Organisation Documents)
+
+        **File size limit:** 50 MB
+
+        **File types accepted:**
+          * images:
+            - .jpg  | image/jpeg
+            - .png  | image/png
+          * documents:
+            - .doc  | application/msword
+            - .docx | application/vnd.openxmlformats-officedocument.wordprocessingml.document
+            - .xls  | application/vnd.ms-excel
+            - .xlsx | application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+            - .ppt  | application/vnd.ms-powerpoint
+            - .pptx | application/vnd.openxmlformats-officedocument.presentationml.presentation
+            - .pdf  | application/pdf
+          * text files:
+            - .txt  | text/plain
+            - .xml  | application/xml
+            - .json | application/json
+          * archives:
+            - .zip  | application/zip
+            - .rar  | application/vnd.rar
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `MANAGE_CRISIS_ACTIONS`
+          * `INVITE_OWN_USERS`
+          * `INVITE_ANY_USERS`
+          * `MANAGE_ANY_MANUAL_FILE_UPLOAD`
+          * `MANAGE_OWN_MANUAL_FILE_UPLOAD`
+
+        __Generates Audit Log Entry:__ `UPLOAD_ATTACHMENT`
+      tags:
+        - attachment
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - MANAGE_CRISIS_ACTIONS
+        - INVITE_OWN_USERS
+        - INVITE_ANY_USERS
+        - MANAGE_ANY_MANUAL_FILE_UPLOAD
+        - MANAGE_OWN_MANUAL_FILE_UPLOAD
+      x-audit-log: UPLOAD_ATTACHMENT
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - fileName
+                - file
+              properties:
+                fileName:
+                  $ref: '#/components/schemas/FileName'
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: __Created__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Attachment'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          description: |
+            __Payload Too Large__
+
+            The attachment to be uploaded exceeded to defined size limit
+        '422':
+          description: |-
+            __Unprocessable Entity__
+
+            *  `INVALID_ATTACHMENT_FILE_TYPE` - only files with the specified file types can be uploaded
+          x-errors:
+            - code: INVALID_ATTACHMENT_FILE_TYPE
+              description: only files with the specified file types can be uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/audit-logs:
+    get:
+      operationId: getAuditLogs
+      description: |-
+        Fetch a list of Audit Logs optionally filtered for an Organisation
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_OWN_AUDIT_LOGS`
+          * `VIEW_ANY_AUDIT_LOGS`
+      tags:
+        - audit-log
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_OWN_AUDIT_LOGS
+        - VIEW_ANY_AUDIT_LOGS
+      parameters:
+        - $ref: '#/components/parameters/PageLimit'
+        - $ref: '#/components/parameters/PageOffsetOptional'
+        - $ref: '#/components/parameters/IdOffsetOptional'
+        - name: sortBy
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/AuditLogSortBy'
+        - name: domains
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/AuditLogDomain'
+        - $ref: '#/components/parameters/OrganisationIdOptional'
+        - name: creationPeriodStart
+          in: query
+          schema:
+            $ref: '#/components/schemas/DateTime'
+        - name: creationPeriodEnd
+          in: query
+          schema:
+            $ref: '#/components/schemas/DateTime'
+        - name: query
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/AuditLogStatus'
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLogBatch'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `INVALID_ORGANISATION_ID` - specified Organisation not found in the system
+          x-errors:
+            - code: INVALID_ORGANISATION_ID
+              description: specified Organisation not found in the system
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: |-
+            __Unprocessable Entity__
+
+            *  `PERIOD_MISALIGNED` - if both specified `creationPeriodStart` and `creationPeriodEnd` parameters must come after each other
+          x-errors:
+            - code: PERIOD_MISALIGNED
+              description: if both specified `creationPeriodStart` and `creationPeriodEnd` parameters must come after each other
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/audit-logs/{id}/payload:
+    get:
+      operationId: getAuditLogPayload
+      description: |-
+        Fetch payload for an existing Audit Log entry by its identifier
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_OWN_AUDIT_LOGS`
+          * `VIEW_ANY_AUDIT_LOGS`
+      tags:
+        - audit-log
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_OWN_AUDIT_LOGS
+        - VIEW_ANY_AUDIT_LOGS
+      parameters:
+        - $ref: '#/components/parameters/Identifier'
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLogPayload'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/default-nominations/options:
+    get:
+      operationId: getDefaultNominationOptions
+      description: |-
+        Fetch options for creating and updating Default Nominations
+
+        Returns current nomination MTU size configuraiton for all timescales
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_OWN_DEFAULT_NOMINATIONS`
+          * `VIEW_ANY_DEFAULT_NOMINATIONS`
+      tags:
+        - default-nomination
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_OWN_DEFAULT_NOMINATIONS
+        - VIEW_ANY_DEFAULT_NOMINATIONS
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DefaultNominationOptions'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/default-nominations:
+    get:
+      operationId: getDefaultNominations
+      description: |-
+        Fetch Default Nominations for a given Participant
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_OWN_DEFAULT_NOMINATIONS`
+          * `VIEW_ANY_DEFAULT_NOMINATIONS`
+      tags:
+        - default-nomination
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_OWN_DEFAULT_NOMINATIONS
+        - VIEW_ANY_DEFAULT_NOMINATIONS
+      parameters:
+        - $ref: '#/components/parameters/PageLimit'
+        - $ref: '#/components/parameters/PageOffset'
+        - name: sortBy
+          in: query
+          required: true
+          description: Sort list by given attribute and direction
+          schema:
+            $ref: '#/components/schemas/DefaultNominationSortBy'
+        - $ref: '#/components/parameters/ParticipantId'
+        - $ref: '#/components/parameters/Timescales'
+        - $ref: '#/components/parameters/BorderDirectionWithBoth'
+        - $ref: '#/components/parameters/DeliveryPeriodStart'
+        - $ref: '#/components/parameters/DeliveryPeriodEnd'
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DefaultNominationBatch'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `INVALID_PARTICIPANT_ID` - specified Participant not found in the system
+            *  `PERIOD_MISALIGNED` - delivery period start and end parameters need to come after each other
+          x-errors:
+            - code: INVALID_PARTICIPANT_ID
+              description: specified Participant not found in the system
+            - code: PERIOD_MISALIGNED
+              description: delivery period start and end parameters need to come after each other
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      operationId: createDefaultNomination
+      description: |-
+        Create new Default Nomination for a given Timescale
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `MANAGE_OWN_DEFAULT_NOMINATIONS`
+          * `MANAGE_ANY_DEFAULT_NOMINATIONS`
+
+        __Generates Audit Log Entry:__ `CREATE_DEFAULT_NOMINATION`
+      tags:
+        - default-nomination
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - MANAGE_OWN_DEFAULT_NOMINATIONS
+        - MANAGE_ANY_DEFAULT_NOMINATIONS
+      x-audit-log: CREATE_DEFAULT_NOMINATION
+      parameters:
+        - $ref: '#/components/parameters/ParticipantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDefaultNominationRequest'
+      responses:
+        '201':
+          description: __Created__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedDefaultNomination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: |-
+            __Unprocessable Entity__
+
+            *  `PERIOD_MISALIGNED` - for delivery period start and end values need to come after each other
+            *  `MTU_LIST_MISALIGNED`
+                - one or more MTU start times are not aligned to MTU borders (considering MTU size for the given timescale)
+                - the number of MTUs defined does not match the required number
+            *  `PERIOD_OVERLAP`
+                - delivery period overlaps with a delivery period of an existing Default Nomination on the given timescale
+            *  `INVALID_NOMINATION_VALUE`
+                - if the type is set to VALUE a greater than or equal to zero value need to be supplied
+          x-errors:
+            - code: PERIOD_MISALIGNED
+              description: for delivery period start and end values need to come after each other
+            - code: MTU_LIST_MISALIGNED
+              description: |
+                - one or more MTU start times are not aligned to MTU borders (considering MTU size for the given timescale)
+                - the number of MTUs defined does not match the required number
+            - code: PERIOD_OVERLAP
+              description: |
+                - delivery period overlaps with a delivery period of an existing Default Nomination on the given timescale
+            - code: INVALID_NOMINATION_VALUE
+              description: |
+                - if the type is set to VALUE a greater than or equal to zero value need to be supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/default-nominations/{id}:
+    get:
+      operationId: getDefaultNomination
+      description: |-
+        Fetch a Default Nomination by its identifier
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_OWN_DEFAULT_NOMINATIONS`
+          * `VIEW_ANY_DEFAULT_NOMINATIONS`
+      tags:
+        - default-nomination
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_OWN_DEFAULT_NOMINATIONS
+        - VIEW_ANY_DEFAULT_NOMINATIONS
+      parameters:
+        - $ref: '#/components/parameters/Identifier'
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DefaultNominationDetails'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      operationId: updateDefaultNomination
+      description: |-
+        Update an existing Default Nomination by its identifier
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `MANAGE_OWN_DEFAULT_NOMINATIONS`
+          * `MANAGE_ANY_DEFAULT_NOMINATIONS`
+
+        __Generates Audit Log Entry:__ `UPDATE_DEFAULT_NOMINATION`
+      tags:
+        - default-nomination
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - MANAGE_OWN_DEFAULT_NOMINATIONS
+        - MANAGE_ANY_DEFAULT_NOMINATIONS
+      x-audit-log: UPDATE_DEFAULT_NOMINATION
+      parameters:
+        - $ref: '#/components/parameters/Identifier'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDefaultNominationRequest'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: |-
+            __Unprocessable Entity__
+
+            *  `PERIOD_MISALIGNED` - for delivery period start and end values need to come after each other
+            *  `MTU_LIST_MISALIGNED`
+                - one or more MTU start times are not aligned to MTU borders (considering MTU size for the given timescale)
+                - the number of MTUs defined does not match the required number
+            *  `PERIOD_OVERLAP`
+                - delivery period overlaps with a delivery period of an existing Default Nomination on the given timescale
+                - except entity to be currently updated
+            *  `INVALID_NOMINATION_VALUE`
+                - if the type is set to VALUE a greater than or equal to zero value need to be supplied
+          x-errors:
+            - code: PERIOD_MISALIGNED
+              description: for delivery period start and end values need to come after each other
+            - code: MTU_LIST_MISALIGNED
+              description: |
+                - one or more MTU start times are not aligned to MTU borders (considering MTU size for the given timescale)
+                - the number of MTUs defined does not match the required number
+            - code: PERIOD_OVERLAP
+              description: |
+                - delivery period overlaps with a delivery period of an existing Default Nomination on the given timescale
+                - except entity to be currently updated
+            - code: INVALID_NOMINATION_VALUE
+              description: |
+                - if the type is set to VALUE a greater than or equal to zero value need to be supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      operationId: deleteDefaultNomination
+      description: |-
+        Delete an existing Default Nomination
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `MANAGE_OWN_DEFAULT_NOMINATIONS`
+          * `MANAGE_ANY_DEFAULT_NOMINATIONS`
+
+        __Generates Audit Log Entry:__ `DELETE_DEFAULT_NOMINATION`
+      tags:
+        - default-nomination
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - MANAGE_OWN_DEFAULT_NOMINATIONS
+        - MANAGE_ANY_DEFAULT_NOMINATIONS
+      x-audit-log: DELETE_DEFAULT_NOMINATION
+      parameters:
+        - $ref: '#/components/parameters/Identifier'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `STATUS_MISMATCH` - only `ACTIVE` (not already deleted) Default Nominations can be deleted
+          x-errors:
+            - code: STATUS_MISMATCH
+              description: only `ACTIVE` (not already deleted) Default Nominations can be deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/manual-file-upload/nominations:
+    post:
+      operationId: uploadNominations
+      description: |-
+        Upload Nominations for Participant as a "Schedule Document", read more at: https://eepublicdownloads.entsoe.eu/clean-documents/EDI/Library/cim_based/schema/Schedule%20document%20uml%20model%20and%20schema%20v1.1.pdf
+
+        First you need to upload the "Schedule Document" XML as a standard Attachment using the `uploadAttachment` endpoint, then you need to submit the returned ID of the Attachment to this endpoint, which validates file syntax and contents before accepting it.
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `MANAGE_ANY_MANUAL_FILE_UPLOAD`
+          * `MANAGE_OWN_MANUAL_FILE_UPLOAD`
+
+        __Generates Audit Log Entry:__ `UPLOAD_NOMINATIONS`
+      tags:
+        - manual-file-upload
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - MANAGE_ANY_MANUAL_FILE_UPLOAD
+        - MANAGE_OWN_MANUAL_FILE_UPLOAD
+      x-audit-log: UPLOAD_NOMINATIONS
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManualFileUploadRequest'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `INVALID_PARTICIPANT_EIC_CODE` - specified EIC code for a Participant not found in the system
+            *  `INVALID_ATTACHMENT_ID` - Attachment ID not found in the system
+            *  `SCHEMA_VALIDATION_ERROR` - contents of the submitted Attachment does not conform to the "Schedule Document" schema
+          x-errors:
+            - code: INVALID_PARTICIPANT_EIC_CODE
+              description: specified EIC code for a Participant not found in the system
+            - code: INVALID_ATTACHMENT_ID
+              description: Attachment ID not found in the system
+            - code: SCHEMA_VALIDATION_ERROR
+              description: contents of the submitted Attachment does not conform to the "Schedule Document" schema
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: |-
+            __Unprocessable Entity__
+
+            *  `MTU_LIST_MISALIGNED` - see `submitTimescaleNominations`
+            *  `MTU_NOT_EDITABLE` - see `submitTimescaleNominations`
+            *  `INVALID_NOMINATION_VALUE` - see `submitTimescaleNominations`
+          x-errors:
+            - code: MTU_LIST_MISALIGNED
+              description: see `submitTimescaleNominations`
+            - code: MTU_NOT_EDITABLE
+              description: see `submitTimescaleNominations`
+            - code: INVALID_NOMINATION_VALUE
+              description: see `submitTimescaleNominations`
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/messages/system:
+    get:
+      operationId: getSystemMessages
+      description: |-
+        Fetch General and Operational System Messages
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_GENERAL_SYSTEM_MESSAGES`
+          * `VIEW_OPERATIONAL_SYSTEM_MESSAGES`
+      tags:
+        - messages
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_GENERAL_SYSTEM_MESSAGES
+        - VIEW_OPERATIONAL_SYSTEM_MESSAGES
+      parameters:
+        - $ref: '#/components/parameters/PageLimit'
+        - $ref: '#/components/parameters/PageOffset'
+        - name: sortBy
+          in: query
+          required: true
+          description: Sort list by given attribute and direction
+          schema:
+            $ref: '#/components/schemas/MessageSortBy'
+        - name: category
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/SystemMessageCategory'
+        - name: severities
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/MessageSeverity'
+        - name: senders
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/MessageSender'
+        - name: types
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/MessageType'
+        - $ref: '#/components/parameters/ReceivePeriodStartOptional'
+        - $ref: '#/components/parameters/ReceivePeriodEndOptional'
+        - in: query
+          name: searchQuery
+          schema:
+            type: string
+        - name: hasAttachment
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageBatch'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: |-
+            __Unprocessable Entity__
+
+            *  `PERIOD_MISALIGNED` - the `receivePeriodStart` and `receivePeriodEnd` params must come after each other
+          x-errors:
+            - code: PERIOD_MISALIGNED
+              description: the `receivePeriodStart` and `receivePeriodEnd` params must come after each other
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/messages/participant:
+    get:
+      operationId: getParticipantMessages
+      description: |-
+        Fetch Messages sent for the current Participant
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_PARTICIPANT_MESSAGES`
+      tags:
+        - messages
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_PARTICIPANT_MESSAGES
+      parameters:
+        - $ref: '#/components/parameters/PageLimit'
+        - $ref: '#/components/parameters/PageOffset'
+        - name: sortBy
+          in: query
+          required: true
+          description: Sort list by given attribute and direction
+          schema:
+            $ref: '#/components/schemas/MessageSortBy'
+        - name: severities
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/MessageSeverity'
+        - name: senders
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/MessageSender'
+        - name: types
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/MessageType'
+        - $ref: '#/components/parameters/ReceivePeriodStartOptional'
+        - $ref: '#/components/parameters/ReceivePeriodEndOptional'
+        - in: query
+          name: searchQuery
+          schema:
+            type: string
+        - name: hasAttachment
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageBatch'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `ORGANISATION_TYPE_MISMATCH` - only users of PARTICIPANT type Organisations can fetch the Participant messages
+          x-errors:
+            - code: ORGANISATION_TYPE_MISMATCH
+              description: only users of PARTICIPANT type Organisations can fetch the Participant messages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: |-
+            __Unprocessable Entity__
+
+            *  `PERIOD_MISALIGNED` - the `receivePeriodStart` and `receivePeriodEnd` params must come after each other
+          x-errors:
+            - code: PERIOD_MISALIGNED
+              description: the `receivePeriodStart` and `receivePeriodEnd` params must come after each other
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/messages/participant/unread:
+    get:
+      operationId: getParticipantUnreadMessages
+      description: |-
+        Fetch the number of "unread" Messages sent for the current Participant
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_PARTICIPANT_MESSAGES`
+      tags:
+        - messages
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_PARTICIPANT_MESSAGES
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnreadMessagesResponse'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `ORGANISATION_TYPE_MISMATCH` - only users of PARTICIPANT type Organisations can fetch the Unread Participant messages count
+          x-errors:
+            - code: ORGANISATION_TYPE_MISMATCH
+              description: only users of PARTICIPANT type Organisations can fetch the Unread Participant messages count
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/nomination-gates/overview:
+    get:
+      operationId: getNominationGatesOverview
+      description: |-
+        Fetch an overview about Long Term, Day Ahead and Intraday Nomination Gates for the selected delivery day
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_NOMINATION_GATES_OVERVIEW`
+      tags:
+        - nomination-gate
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_NOMINATION_GATES_OVERVIEW
+      parameters:
+        - $ref: '#/components/parameters/DeliveryDay'
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NominationGatesOverviewResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/nominations/options:
+    get:
+      operationId: getNominationOptions
+      description: |-
+        Fetch options for getting Nominations
+
+        Used to determine which are the available directions for which a given Participant has rights to nominate for a given:
+          - delivery day
+          - type of nomination
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_OWN_NOMINATIONS`
+          * `VIEW_ANY_NOMINATIONS`
+      tags:
+        - nomination
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_OWN_NOMINATIONS
+        - VIEW_ANY_NOMINATIONS
+      parameters:
+        - $ref: '#/components/parameters/DeliveryDay'
+        - $ref: '#/components/parameters/TimescaleNominationType'
+        - $ref: '#/components/parameters/ParticipantId'
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimescaleNominationOptions'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `INVALID_PARTICIPANT_ID` - pecified Participant not found in the system
+          x-errors:
+            - code: INVALID_PARTICIPANT_ID
+              description: pecified Participant not found in the system
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/nominations:
+    get:
+      operationId: getNominations
+      description: |-
+        Fetch current Nominations for a given:
+          - delivery day
+          - type of nomination
+          - particpant
+          - border direction
+
+        MTUs are returned in the timescale's "Nomination MTU Size" resolution
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_OWN_NOMINATIONS`
+          * `VIEW_ANY_NOMINATIONS`
+      tags:
+        - nomination
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_OWN_NOMINATIONS
+        - VIEW_ANY_NOMINATIONS
+      parameters:
+        - $ref: '#/components/parameters/DeliveryDay'
+        - $ref: '#/components/parameters/TimescaleNominationType'
+        - $ref: '#/components/parameters/ParticipantId'
+        - $ref: '#/components/parameters/BorderDirection'
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimescaleNominations'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `INVALID_PARTICIPANT_ID` - specified Participant not found in the system
+          x-errors:
+            - code: INVALID_PARTICIPANT_ID
+              description: specified Participant not found in the system
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    put:
+      operationId: submitNominations
+      description: |-
+        Submit Nominations for the given:
+          - delivery day
+          - type of nomination
+          - particpant
+          - border direction
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `MANAGE_OWN_NOMINATIONS`
+          * `MANAGE_ANY_NOMINATIONS`
+
+        __Generates Audit Log Entry:__ `SUBMIT_NOMINATIONS`
+      tags:
+        - nomination
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - MANAGE_OWN_NOMINATIONS
+        - MANAGE_ANY_NOMINATIONS
+      x-audit-log: SUBMIT_NOMINATIONS
+      parameters:
+        - $ref: '#/components/parameters/DeliveryDay'
+        - $ref: '#/components/parameters/TimescaleNominationType'
+        - $ref: '#/components/parameters/ParticipantId'
+        - $ref: '#/components/parameters/BorderDirection'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitTimescaleNominationsRequest'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `INVALID_PARTICIPANT_ID` - specified Participant not found in the system
+          x-errors:
+            - code: INVALID_PARTICIPANT_ID
+              description: specified Participant not found in the system
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: |-
+            __Unprocessable Entity__
+
+            *  `MTU_LIST_MISALIGNED`
+                - for the values to be sent
+                - one or more MTU start times are not aligned to MTU borders (considering MTU size)
+                - the number of MTUs defined does not match the required number (pay special attention to daylight saving changes!)
+            *  `MTU_NOT_EDITABLE`
+                - only MTUs that are in `mtuStatus = EDITABLE` can contain not-empty values
+                - an MTU can be non-editable because:
+                  - the MTU nomination window for the selected timescale is closed
+                  - has already FIRM nominations
+            *  `INVALID_NOMINATION_VALUE`
+                - nomination values can be empty for any MTU, where not empty has to be (0 <= value <= Total TRs)
+          x-errors:
+            - code: MTU_LIST_MISALIGNED
+              description: |
+                - for the values to be sent
+                - one or more MTU start times are not aligned to MTU borders (considering MTU size)
+                - the number of MTUs defined does not match the required number (pay special attention to daylight saving changes!)
+            - code: MTU_NOT_EDITABLE
+              description: |
+                - only MTUs that are in `mtuStatus = EDITABLE` can contain not-empty values
+                - an MTU can be non-editable because:
+                  - the MTU nomination window for the selected timescale is closed
+                  - has already FIRM nominations
+            - code: INVALID_NOMINATION_VALUE
+              description: |
+                - nomination values can be empty for any MTU, where not empty has to be (0 <= value <= Total TRs)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/nominations/aggregated/options:
+    get:
+      operationId: getAggregatedNominationOptions
+      description: |-
+        Fetch options for Aggregated Nominations
+
+        Returns if the current Participant organisation is configured as "nomination on behalf" for any Markets. If yes, the list of "nominees" returned.
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_OWN_AGGREGATED_NOMINATIONS`
+      tags:
+        - nomination
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_OWN_AGGREGATED_NOMINATIONS
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AggregatedNominationOptions'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `ORGANISATION_TYPE_MISMATCH` - only users of PARTICIPANT type Organisations can fetch the Aggregated Nomination options
+          x-errors:
+            - code: ORGANISATION_TYPE_MISMATCH
+              description: only users of PARTICIPANT type Organisations can fetch the Aggregated Nomination options
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/nominations/aggregated/options/pre-nominations:
+    get:
+      operationId: getAggregatedPreNominationOptions
+      description: |-
+        Fetch pre-nomination options for Aggregated Nominations
+
+        Returns if the selected Participant organisation has pre-nominations defined for all the timescales for the given delivery day.
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_OWN_AGGREGATED_NOMINATIONS`
+          * `VIEW_ANY_AGGREGATED_NOMINATIONS`
+      tags:
+        - nomination
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_OWN_AGGREGATED_NOMINATIONS
+        - VIEW_ANY_AGGREGATED_NOMINATIONS
+      parameters:
+        - $ref: '#/components/parameters/ParticipantId'
+        - $ref: '#/components/parameters/DeliveryDay'
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AggregatedPreNominationOptions'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/nominations/aggregated:
+    get:
+      operationId: getAggregatedNominations
+      description: |-
+        Fetch aggregated Nominatinons for a given:
+          - delivery day
+          - selected timescales
+          - participant(s)
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_OWN_AGGREGATED_NOMINATIONS`
+          * `VIEW_ANY_AGGREGATED_NOMINATIONS`
+      tags:
+        - nomination
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_OWN_AGGREGATED_NOMINATIONS
+        - VIEW_ANY_AGGREGATED_NOMINATIONS
+      parameters:
+        - $ref: '#/components/parameters/DeliveryDay'
+        - $ref: '#/components/parameters/Timescales'
+        - $ref: '#/components/parameters/ParticipantIds'
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AggregatedNominations'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `INVALID_PARTICIPANT_ID` - the specified Participant Organisation is not found or not valid according to the aggregation logic
+          x-errors:
+            - code: INVALID_PARTICIPANT_ID
+              description: the specified Participant Organisation is not found or not valid according to the aggregation logic
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/organisations/{id}:
+    get:
+      operationId: getOrganisation
+      description: |-
+        Fetch an Organisation by its identifier
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_ANY_ORGANISATIONS`
+          * `VIEW_OWN_ORGANISATIONS`
+      tags:
+        - organisation
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_ANY_ORGANISATIONS
+        - VIEW_OWN_ORGANISATIONS
+      parameters:
+        - $ref: '#/components/parameters/Identifier'
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organisation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/organisations/participant/{id}:
+    get:
+      operationId: getParticipantOrganisation
+      description: |-
+        Fetch a Participant-type Organisation by its identifier
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_ANY_ORGANISATIONS`
+          * `VIEW_OWN_ORGANISATIONS`
+      tags:
+        - organisation
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_ANY_ORGANISATIONS
+        - VIEW_OWN_ORGANISATIONS
+      parameters:
+        - $ref: '#/components/parameters/Identifier'
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantOrganisationDetails'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `ORGANISATION_TYPE_MISMATCH` - only Participant-type Organisations can be queried
+          x-errors:
+            - code: ORGANISATION_TYPE_MISMATCH
+              description: only Participant-type Organisations can be queried
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/organisations/participant-names:
+    get:
+      operationId: getParticipantNames
+      description: |
+        Fetches every identifier and name of every Participant-type Organisation
+      tags:
+        - organisation
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Participant'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/participant-dashboard/nominations/options:
+    get:
+      operationId: getParticipantDashboardNominationOptions
+      description: |-
+        Fetch the available Nomination Options for the Dashboard
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_OWN_NOMINATIONS`
+      tags:
+        - participant-dashboard
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_OWN_NOMINATIONS
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantDashboardNominationOptions'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `ORGANISATION_TYPE_MISMATCH` - only users of PARTICIPANT type Organisations can fetch the Participant Dashboard
+          x-errors:
+            - code: ORGANISATION_TYPE_MISMATCH
+              description: only users of PARTICIPANT type Organisations can fetch the Participant Dashboard
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/participant-dashboard/nominations:
+    put:
+      operationId: submitParticipantDashboardNominations
+      description: |-
+        Quickly nominate all TRs for a given Timescale and Border Direction
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `MANAGE_OWN_NOMINATIONS`
+
+        __Generates Audit Log Entry:__ `SUBMIT_PARTICIPANT_DASHBOARD_NOMINATIONS`
+      tags:
+        - participant-dashboard
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - MANAGE_OWN_NOMINATIONS
+      x-audit-log: SUBMIT_PARTICIPANT_DASHBOARD_NOMINATIONS
+      parameters:
+        - $ref: '#/components/parameters/Timescale'
+        - $ref: '#/components/parameters/BorderDirection'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `ORGANISATION_TYPE_MISMATCH` - only users of PARTICIPANT type Organisations can interact with the Participant Dashboard
+            *  `NOMINATIONS_CANNOT_BE_SUBMITTED`
+                - when the Nomination Gate for the given timescale is already CLOSED
+                - when not CLOSED
+                  * if the Participant does not have any TRs in the specified direction
+          x-errors:
+            - code: ORGANISATION_TYPE_MISMATCH
+              description: only users of PARTICIPANT type Organisations can interact with the Participant Dashboard
+            - code: NOMINATIONS_CANNOT_BE_SUBMITTED
+              description: |
+                - when the Nomination Gate for the given timescale is already CLOSED
+                - when not CLOSED
+                  * if the Participant does not have any TRs in the specified direction
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/participant-dashboard/messages:
+    get:
+      operationId: getParticipantDashboardMessages
+      description: |-
+        Fetch the latest 3 messages from the General System Messages and the Participant Inbox
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_PARTICIPANT_DASHBOARD`
+      tags:
+        - participant-dashboard
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_PARTICIPANT_DASHBOARD
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantDashboardMessages'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `ORGANISATION_TYPE_MISMATCH` - only users of PARTICIPANT type Organisations can fetch the Participant Dashboard
+          x-errors:
+            - code: ORGANISATION_TYPE_MISMATCH
+              description: only users of PARTICIPANT type Organisations can fetch the Participant Dashboard
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/participant-dashboard/interconnector-capacity-graph:
+    get:
+      operationId: getParticipantDashboardInterconnectorCapacityGraph
+      description: |-
+        Fetch data for tne Interconnector Capacity Graph
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_PARTICIPANT_DASHBOARD`
+      tags:
+        - participant-dashboard
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_PARTICIPANT_DASHBOARD
+      parameters:
+        - $ref: '#/components/parameters/DeliveryPeriodStart'
+        - $ref: '#/components/parameters/DeliveryPeriodEnd'
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantDashboardInterconnectorCapacityGraphData'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `ORGANISATION_TYPE_MISMATCH` - only users of PARTICIPANT type Organisations can fetch the Participant Dashboard
+          x-errors:
+            - code: ORGANISATION_TYPE_MISMATCH
+              description: only users of PARTICIPANT type Organisations can fetch the Participant Dashboard
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: |-
+            __Unprocessable Entity__
+
+            *  `PERIOD_MISALIGNED` - the `deliveryPeriodStart` and `deliveryPeriodEnd` params must come after each other
+            *  `PERIOD_TOO_LONG` - a maximum of 7 calendar days is selectable
+          x-errors:
+            - code: PERIOD_MISALIGNED
+              description: the `deliveryPeriodStart` and `deliveryPeriodEnd` params must come after each other
+            - code: PERIOD_TOO_LONG
+              description: a maximum of 7 calendar days is selectable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/participant-dashboard/interconnector-capacity:
+    get:
+      operationId: getParticipantDashboardInterconnectorCapacity
+      description: |-
+        Fetch Interconnector Capacity information
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_PARTICIPANT_DASHBOARD`
+      tags:
+        - participant-dashboard
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_PARTICIPANT_DASHBOARD
+      parameters:
+        - $ref: '#/components/parameters/DeliveryDay'
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantDashboardInterconnectorCapacityData'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `ORGANISATION_TYPE_MISMATCH` - only users of PARTICIPANT type Organisations can fetch the Participant Dashboard
+          x-errors:
+            - code: ORGANISATION_TYPE_MISMATCH
+              description: only users of PARTICIPANT type Organisations can fetch the Participant Dashboard
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/participant-dashboard/transmission-rights-and-nominations-graph:
+    get:
+      operationId: getParticipantDashboardTransmissionRightsAndNominationsGraph
+      description: |-
+        Fetch data about Transmission Right & Nominations Graph
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_PARTICIPANT_DASHBOARD`
+      tags:
+        - participant-dashboard
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_PARTICIPANT_DASHBOARD
+      parameters:
+        - $ref: '#/components/parameters/DeliveryPeriodStart'
+        - $ref: '#/components/parameters/DeliveryPeriodEnd'
+        - $ref: '#/components/parameters/Timescales'
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantDashboardTransmissionRightsAndNominationsGraphData'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `ORGANISATION_TYPE_MISMATCH` - only users of PARTICIPANT type Organisations can fetch the Participant Dashboard
+          x-errors:
+            - code: ORGANISATION_TYPE_MISMATCH
+              description: only users of PARTICIPANT type Organisations can fetch the Participant Dashboard
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: |-
+            __Unprocessable Entity__
+
+            *  `PERIOD_MISALIGNED` - the `deliveryPeriodStart` and `deliveryPeriodEnd` params must come after each other
+            *  `PERIOD_TOO_LONG` - a maximum of 7 calendar days is selectable
+          x-errors:
+            - code: PERIOD_MISALIGNED
+              description: the `deliveryPeriodStart` and `deliveryPeriodEnd` params must come after each other
+            - code: PERIOD_TOO_LONG
+              description: a maximum of 7 calendar days is selectable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/participant-dashboard/transmission-rights-and-nominations:
+    get:
+      operationId: getParticipantDashboardTransmissionRightsAndNominations
+      description: |-
+        Fetch data about Transmission Right & Nominations
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_PARTICIPANT_DASHBOARD`
+      tags:
+        - participant-dashboard
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_PARTICIPANT_DASHBOARD
+      parameters:
+        - $ref: '#/components/parameters/DeliveryDay'
+        - $ref: '#/components/parameters/Timescales'
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantDashboardTransmissionRightsAndNominationsData'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `ORGANISATION_TYPE_MISMATCH` - only users of PARTICIPANT type Organisations can fetch the Participant Dashboard
+          x-errors:
+            - code: ORGANISATION_TYPE_MISMATCH
+              description: only users of PARTICIPANT type Organisations can fetch the Participant Dashboard
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/participant-dashboard/netted-nominations:
+    get:
+      operationId: getParticipantDashboardNettedNominations
+      description: |-
+        Fetch Netted Nominations for a given delivery day
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_PARTICIPANT_DASHBOARD`
+      tags:
+        - participant-dashboard
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_PARTICIPANT_DASHBOARD
+      parameters:
+        - $ref: '#/components/parameters/DeliveryDay'
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantDashboardNettedNominationsData'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `ORGANISATION_TYPE_MISMATCH` - only users of PARTICIPANT type Organisations can fetch the Participant Dashboard
+          x-errors:
+            - code: ORGANISATION_TYPE_MISMATCH
+              description: only users of PARTICIPANT type Organisations can fetch the Participant Dashboard
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/participant-dashboard/next-nomination-gates:
+    get:
+      operationId: getParticipantDashboardNextNominationGates
+      description: |-
+        Fetches next Nomination Gates for the Participants
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_PARTICIPANT_DASHBOARD`
+      tags:
+        - participant-dashboard
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_PARTICIPANT_DASHBOARD
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantDashboardNextNominationGates'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `ORGANISATION_TYPE_MISMATCH` - only users of PARTICIPANT type Organisations can fetch the Participant Dashboard
+          x-errors:
+            - code: ORGANISATION_TYPE_MISMATCH
+              description: only users of PARTICIPANT type Organisations can fetch the Participant Dashboard
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/participant-dashboard/default-nominations:
+    get:
+      operationId: getParticipantDashboardDefaultNominations
+      description: |-
+        Fetches information if Default Nominations exists for the Participant
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_PARTICIPANT_DASHBOARD`
+      tags:
+        - participant-dashboard
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_PARTICIPANT_DASHBOARD
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantDashboardDefaultNominationsData'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `ORGANISATION_TYPE_MISMATCH` - only users of PARTICIPANT type Organisations can fetch the Participant Dashboard
+          x-errors:
+            - code: ORGANISATION_TYPE_MISMATCH
+              description: only users of PARTICIPANT type Organisations can fetch the Participant Dashboard
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/participant-overview:
+    get:
+      operationId: getParticipantOverview
+      description: |-
+        Fetch an overview of Participant-related information
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_ANY_ORGANISATIONS`
+          * `VIEW_OWN_ORGANISATIONS`
+      tags:
+        - participant-overview
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_ANY_ORGANISATIONS
+        - VIEW_OWN_ORGANISATIONS
+      parameters:
+        - $ref: '#/components/parameters/ParticipantId'
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantOverviewData'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `INVALID_PARTICIPANT_ID` - specified Participant not found in the system
+          x-errors:
+            - code: INVALID_PARTICIPANT_ID
+              description: specified Participant not found in the system
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/profile:
+    get:
+      operationId: getProfile
+      description: |
+        Fetch profile data for the currently authenticated User
+      tags:
+        - profile
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /v1/profile/details:
+    get:
+      operationId: getProfileDetails
+      description: |
+        Fetch profile details for the currently authenticated User
+      tags:
+        - profile
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileDetails'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    put:
+      operationId: updateProfileDetails
+      description: |-
+        Update profile details for the currently authenticated User
+
+        ---
+
+        __Generates Audit Log Entry:__ `UPDATE_PROFILE_DETAILS`
+      tags:
+        - profile
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-audit-log: UPDATE_PROFILE_DETAILS
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileDetailsRequest'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `AUTH_METHOD_MISMATCH` - only Users from Organisations authenticated through the Platform (not through SSO) can update their profile
+          x-errors:
+            - code: AUTH_METHOD_MISMATCH
+              description: only Users from Organisations authenticated through the Platform (not through SSO) can update their profile
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /v1/profile/preferences:
+    get:
+      operationId: getPreferences
+      description: |
+        Fetch Preferences for the currently authenticated User
+      tags:
+        - profile
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPreferences'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    put:
+      operationId: updatePreferences
+      description: |-
+        Update Preferences for the currently authenticated User
+
+        ---
+
+        __Generates Audit Log Entry:__ `UPDATE_PREFERENCES`
+      tags:
+        - profile
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-audit-log: UPDATE_PREFERENCES
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPreferences'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /v1/profile/api-keys:
+    get:
+      operationId: getApiKeys
+      description: |
+        Fetch API Keys for the currently authenticated User
+      tags:
+        - profile
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiKey'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      operationId: createApiKey
+      description: |-
+        Create a new API Key for the currently authenticated User
+
+        The key value itself will be only presented once in the response
+
+        ---
+
+        __Generates Audit Log Entry:__ `CREATE_API_KEY`
+      tags:
+        - profile
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-audit-log: CREATE_API_KEY
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateApiKeyRequest'
+      responses:
+        '201':
+          description: __Created__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedApiKey'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: |-
+            __Unprocessable Entity__
+
+            *  `API_KEY_NAME_NOT_UNIQUE` - the name of the API Key has to be unique among the User's API Keys
+          x-errors:
+            - code: API_KEY_NAME_NOT_UNIQUE
+              description: the name of the API Key has to be unique among the User's API Keys
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/profile/api-keys/{id}:
+    delete:
+      operationId: deleteApiKey
+      description: |-
+        Delete an API Key by its identifier for the currently authenticated User
+
+        ---
+
+        __Generates Audit Log Entry:__ `DELETE_API_KEY`
+      tags:
+        - profile
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-audit-log: DELETE_API_KEY
+      parameters:
+        - $ref: '#/components/parameters/Identifier'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/profile/zendesk-chat-token:
+    get:
+      operationId: getZendeskChatToken
+      description: |
+        Fetch a signed JWT for Zendesk Chat which encapsulates the authenticated User's identity
+
+        Used to authenticate the Zendesk Chat Web Widget so the user could see their message history
+      tags:
+        - profile
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZendeskChatTokenResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /v1/public/platform-overview:
+    get:
+      operationId: getPublicPlatformOverview
+      description: |
+        Fetch publicly available information about NTC, Aggregated Nominations and Netted Nominations
+      tags:
+        - public-overview
+      parameters:
+        - $ref: '#/components/parameters/DeliveryDay'
+        - $ref: '#/components/parameters/MtuSize'
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicPlatformOverviewResponse'
+  /v1/reporting/trs-and-nominations/overview:
+    get:
+      operationId: getTrsAndNominationsOverviewReport
+      description: |-
+        Fetch Transmission Rights & Nominations Overview Report
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_OWN_TRANSMISSION_RIGHTS`
+          * `VIEW_ANY_TRANSMISSION_RIGHTS`
+          * `VIEW_OWN_AGGREGATED_NOMINATIONS`
+          * `VIEW_ANY_AGGREGATED_NOMINATIONS`
+      tags:
+        - reporting
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_OWN_TRANSMISSION_RIGHTS
+        - VIEW_ANY_TRANSMISSION_RIGHTS
+        - VIEW_OWN_AGGREGATED_NOMINATIONS
+        - VIEW_ANY_AGGREGATED_NOMINATIONS
+      parameters:
+        - $ref: '#/components/parameters/DeliveryPeriodStart'
+        - $ref: '#/components/parameters/DeliveryPeriodEnd'
+        - $ref: '#/components/parameters/BorderDirectionWithBoth'
+        - $ref: '#/components/parameters/ParticipantIds'
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                $ref: '#/components/schemas/ReportFile'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `INVALID_PARTICIPANT_ID` - the specified Participant not found in the system
+          x-errors:
+            - code: INVALID_PARTICIPANT_ID
+              description: the specified Participant not found in the system
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: |-
+            __Unprocessable Entity__
+
+            *  `PERIOD_MISALIGNED` - delivery period start and end dates must come after each other
+            *  `PERIOD_TOO_LONG` - for delivery period the maximum period length is 1 month
+          x-errors:
+            - code: PERIOD_MISALIGNED
+              description: delivery period start and end dates must come after each other
+            - code: PERIOD_TOO_LONG
+              description: for delivery period the maximum period length is 1 month
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/reporting/trs-and-nominations/proof:
+    get:
+      operationId: getTrsAndNominationsProofReport
+      description: |-
+        Fetch Transmission Rights & Nominations Proof Report
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_OWN_NOMINATIONS`
+          * `VIEW_ANY_NOMINATIONS`
+      tags:
+        - reporting
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_OWN_NOMINATIONS
+        - VIEW_ANY_NOMINATIONS
+      parameters:
+        - $ref: '#/components/parameters/DeliveryPeriodStart'
+        - $ref: '#/components/parameters/DeliveryPeriodEnd'
+        - $ref: '#/components/parameters/ParticipantId'
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/pdf:
+              schema:
+                $ref: '#/components/schemas/ReportFile'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `INVALID_PARTICIPANT_ID` - the specified Participant not found in the system
+            *  `PERIOD_NOT_WHOLE_MONTHS` - period must cover whole months
+          x-errors:
+            - code: INVALID_PARTICIPANT_ID
+              description: the specified Participant not found in the system
+            - code: PERIOD_NOT_WHOLE_MONTHS
+              description: period must cover whole months
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: |-
+            __Unprocessable Entity__
+
+            *  `PERIOD_MISALIGNED` - delivery period start and end dates must come after each other
+            *  `PERIOD_TOO_LONG` - for delivery period the maximum period length is 1 year
+          x-errors:
+            - code: PERIOD_MISALIGNED
+              description: delivery period start and end dates must come after each other
+            - code: PERIOD_TOO_LONG
+              description: for delivery period the maximum period length is 1 year
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/reporting/outages/curtailment:
+    get:
+      operationId: getOutagesCurtailmentReport
+      description: |-
+        Fetch Curtailment Report
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_OWN_NOMINATIONS`
+          * `VIEW_ANY_NOMINATIONS`
+          * `VIEW_CRISIS`
+      tags:
+        - reporting
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_OWN_NOMINATIONS
+        - VIEW_ANY_NOMINATIONS
+        - VIEW_CRISIS
+      parameters:
+        - name: deliveryPeriodStart
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/Date'
+        - name: deliveryPeriodEnd
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/Date'
+        - $ref: '#/components/parameters/ParticipantIds'
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                $ref: '#/components/schemas/ReportFile'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `INVALID_PARTICIPANT_ID` - the specified Participant not found in the system
+          x-errors:
+            - code: INVALID_PARTICIPANT_ID
+              description: the specified Participant not found in the system
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: |-
+            __Unprocessable Entity__
+
+            *  `PERIOD_MISALIGNED` - delivery period start and end dates must come after each other
+            *  `PERIOD_TOO_LONG` - for delivery period the maximum period length is 1 week
+          x-errors:
+            - code: PERIOD_MISALIGNED
+              description: delivery period start and end dates must come after each other
+            - code: PERIOD_TOO_LONG
+              description: for delivery period the maximum period length is 1 week
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/reporting/organisations/users:
+    get:
+      operationId: getOrganisationsUsersReport
+      description: |-
+        Fetch Users Report
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_OWN_USERS`
+          * `VIEW_ANY_USERS`
+      tags:
+        - reporting
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_OWN_USERS
+        - VIEW_ANY_USERS
+      parameters:
+        - $ref: '#/components/parameters/OrganisationIds'
+        - in: query
+          name: statuses
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/UserStatus'
+        - in: query
+          name: roles
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/UserRole'
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                $ref: '#/components/schemas/ReportFile'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `INVALID_ORGANISATION_ID` - organisation with the given ID is not found on the Platform
+          x-errors:
+            - code: INVALID_ORGANISATION_ID
+              description: organisation with the given ID is not found on the Platform
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/reporting/organisations/audit-logs:
+    get:
+      operationId: getOrganisationsAuditLogsReport
+      description: |-
+        Fetch Audit Logs Report
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_OWN_AUDIT_LOGS`
+          * `VIEW_ANY_AUDIT_LOGS`
+      tags:
+        - reporting
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_OWN_AUDIT_LOGS
+        - VIEW_ANY_AUDIT_LOGS
+      parameters:
+        - $ref: '#/components/parameters/OrganisationIds'
+        - name: periodStart
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/Date'
+        - name: periodEnd
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/Date'
+        - in: query
+          name: domains
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/AuditLogDomain'
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                $ref: '#/components/schemas/ReportFile'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `INVALID_ORGANISATION_ID` - organisation with the given ID is not found on the Platform
+          x-errors:
+            - code: INVALID_ORGANISATION_ID
+              description: organisation with the given ID is not found on the Platform
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: |-
+            __Unprocessable Entity__
+
+            *  `PERIOD_MISALIGNED` - period start and end dates must come after each other
+            *  `PERIOD_TOO_LONG` - for period the maximum length is 1 year
+          x-errors:
+            - code: PERIOD_MISALIGNED
+              description: period start and end dates must come after each other
+            - code: PERIOD_TOO_LONG
+              description: for period the maximum length is 1 year
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/transmission-rights/overview:
+    get:
+      operationId: getTransmissionRightsOverview
+      description: |-
+        Fetch an filterable overview of Transmission Rights
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_OWN_TRANSMISSION_RIGHTS`
+          * `VIEW_ANY_TRANSMISSION_RIGHTS`
+      tags:
+        - transmission-right
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_OWN_TRANSMISSION_RIGHTS
+        - VIEW_ANY_TRANSMISSION_RIGHTS
+      parameters:
+        - $ref: '#/components/parameters/DeliveryDay'
+        - $ref: '#/components/parameters/ParticipantIds'
+        - $ref: '#/components/parameters/Timescales'
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransmissionRightsOverview'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `INVALID_PARTICIPANT_ID` - specified Participant not found in the system
+          x-errors:
+            - code: INVALID_PARTICIPANT_ID
+              description: specified Participant not found in the system
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/users:
+    get:
+      operationId: getUsers
+      description: |-
+        Fetch a filterable, searchable list of Users of an Organisations
+
+        Sorting using the `sortBy` query parameter is implemented with the following options:
+          * `NAME`
+            - _primary:_ always ACTIVE/SUSPENDED first, INVITED last
+            - _secondary:_ name by ASC/DESC
+          * `ROLE`
+            - `ASC/DESC` - ordered alphabetically by role name
+          * `LAST_LOGIN`
+            - `ASC/DESC` - ordered by time
+          * `STATUS`
+            - _primary:_
+              * `ASC` - ACTIVE, INVITED, SUSPENDED
+              * `DESC` - SUSPENDED, INVITED, ACTIVE
+            - _secondary:_ always by name by ASC
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_OWN_USERS`
+          * `VIEW_ANY_USERS`
+      tags:
+        - user
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_OWN_USERS
+        - VIEW_ANY_USERS
+      parameters:
+        - $ref: '#/components/parameters/OrganisationId'
+        - $ref: '#/components/parameters/PageLimit'
+        - $ref: '#/components/parameters/PageOffset'
+        - name: statuses
+          in: query
+          required: true
+          description: Filter for given statuses
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/UserStatus'
+        - name: sortBy
+          in: query
+          required: true
+          description: Sort list by given attribute and direction
+          schema:
+            $ref: '#/components/schemas/OrganisationUserSortBy'
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganisationUserBatch'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/users/{id}:
+    get:
+      operationId: getUser
+      description: |-
+        Fetch a User by its identifier
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `VIEW_OWN_USERS`
+          * `VIEW_ANY_USERS`
+      tags:
+        - user
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - VIEW_OWN_USERS
+        - VIEW_ANY_USERS
+      parameters:
+        - $ref: '#/components/parameters/Identifier'
+      responses:
+        '200':
+          description: __OK__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `STATUS_MISMATCH` - only users in ACTIVE/SUSPENDED status can be queried
+          x-errors:
+            - code: STATUS_MISMATCH
+              description: only users in ACTIVE/SUSPENDED status can be queried
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      operationId: updateUser
+      description: |-
+        Update a User by its identifier
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `MANAGE_OWN_USERS`
+          * `MANAGE_ANY_USERS`
+
+        __Generates Audit Log Entry:__ `UPDATE_USER`
+      tags:
+        - user
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - MANAGE_OWN_USERS
+        - MANAGE_ANY_USERS
+      x-audit-log: UPDATE_USER
+      parameters:
+        - $ref: '#/components/parameters/Identifier'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `AUTH_METHOD_MISMATCH` - only Users from Organisations authenticated through the Platform (not through SSO) can be updated
+            *  `STATUS_MISMATCH` - only users in ACTIVE/SUSPENDED status can be updated
+            *  `ROLE_MISMATCH` - only roles matching the Organisation's type can be specified (e.g ICO_ roles for ICO type Organisation)
+          x-errors:
+            - code: AUTH_METHOD_MISMATCH
+              description: only Users from Organisations authenticated through the Platform (not through SSO) can be updated
+            - code: STATUS_MISMATCH
+              description: only users in ACTIVE/SUSPENDED status can be updated
+            - code: ROLE_MISMATCH
+              description: only roles matching the Organisation's type can be specified (e.g ICO_ roles for ICO type Organisation)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/users/invite:
+    post:
+      operationId: inviteUser
+      description: |-
+        Invite a User for a selected Organisation
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `INVITE_OWN_USERS`
+          * `INVITE_ANY_USERS`
+
+        __Generates Audit Log Entry:__ `INVITE_USER`
+      tags:
+        - user
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - INVITE_OWN_USERS
+        - INVITE_ANY_USERS
+      x-audit-log: INVITE_USER
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteOrganisationUserRequest'
+      parameters:
+        - $ref: '#/components/parameters/OrganisationId'
+      responses:
+        '201':
+          description: __Created__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvitedOrganisationUser'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `AUTH_METHOD_MISMATCH` - only Users from Organisations authenticated through the Platform (not through SSO) can have their invitations resent
+          x-errors:
+            - code: AUTH_METHOD_MISMATCH
+              description: only Users from Organisations authenticated through the Platform (not through SSO) can have their invitations resent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: |-
+            __Unprocessable Entity__
+
+            *  `ROLE_MISMATCH` - only roles matching the Organisation's type can be specified (e.g ICO_ roles for ICO type Organisation)
+            *  `EMAIL_ADDRESS_NOT_UNIQUE` - email addresses should be unique across **all Organisations** using the Platform
+          x-errors:
+            - code: ROLE_MISMATCH
+              description: only roles matching the Organisation's type can be specified (e.g ICO_ roles for ICO type Organisation)
+            - code: EMAIL_ADDRESS_NOT_UNIQUE
+              description: email addresses should be unique across **all Organisations** using the Platform
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/users/bulk-invite:
+    post:
+      operationId: bulkInviteUsers
+      description: |-
+        Invite a batch of Users for a selected Organisation
+
+        The input should be an Excel spreadsheet uploaded as an Attachment (using the `uploadAttachment` endpoint). The bulk user invitation is done in a transactional manner, either every specified user, or no user gets invited.
+
+        Format restrictions:
+          - row #1 should container the headers specified above
+          - column A should be the `email` column (entries starting from row #2)
+          - column B should be the `role` column (entries starting from row #2)
+            - roles should follow the enumeration specified in `UserRole` model
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `INVITE_OWN_USERS`
+          * `INVITE_ANY_USERS`
+
+        __Generates Audit Log Entry:__ `BULK_INVITE_USERS`
+      tags:
+        - user
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - INVITE_OWN_USERS
+        - INVITE_ANY_USERS
+      x-audit-log: BULK_INVITE_USERS
+      parameters:
+        - $ref: '#/components/parameters/OrganisationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkInviteOrganisationUsersRequest'
+      responses:
+        '201':
+          description: __Created__
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkInvitedOrganisationUsers'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `AUTH_METHOD_MISMATCH` - only Users from Organisations authenticated through the Platform (not through SSO) can have their invitations resent
+            *  `INVALID_ATTACHMENT_ID` - the specified Attachment ID is not found in the system
+          x-errors:
+            - code: AUTH_METHOD_MISMATCH
+              description: only Users from Organisations authenticated through the Platform (not through SSO) can have their invitations resent
+            - code: INVALID_ATTACHMENT_ID
+              description: the specified Attachment ID is not found in the system
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: |-
+            __Unprocessable Entity__
+
+            *  `PROCESSING_ERROR`
+                - the uploaded spreadsheet could not be processed, no users created
+                - validations:
+                  - every row should contain BOTH `email` and `role` column
+                  - `ROLE_MISMATCH` validation should be applied for every row
+                  - `EMAIL_ADDRESS_NOT_UNIQUE` validation should be applied for every row
+                - failures are sent back in a formatted error message
+          x-errors:
+            - code: PROCESSING_ERROR
+              description: |
+                - the uploaded spreadsheet could not be processed, no users created
+                - validations:
+                  - every row should contain BOTH `email` and `role` column
+                  - `ROLE_MISMATCH` validation should be applied for every row
+                  - `EMAIL_ADDRESS_NOT_UNIQUE` validation should be applied for every row
+                - failures are sent back in a formatted error message
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/users/{id}/resend-invite:
+    put:
+      operationId: resendUserInvite
+      description: |-
+        Resend invitation for a User that has not yet accepted it
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `MANAGE_OWN_USERS`
+          * `MANAGE_ANY_USERS`
+
+        __Generates Audit Log Entry:__ `RESEND_USER_INVITE`
+      tags:
+        - user
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - MANAGE_OWN_USERS
+        - MANAGE_ANY_USERS
+      x-audit-log: RESEND_USER_INVITE
+      parameters:
+        - $ref: '#/components/parameters/Identifier'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `AUTH_METHOD_MISMATCH` - only Users from Organisations authenticated through the Platform (not through SSO) can have their invitations resent
+            *  `STATUS_MISMATCH` - only users in INVITED status can have their invitations resent
+          x-errors:
+            - code: AUTH_METHOD_MISMATCH
+              description: only Users from Organisations authenticated through the Platform (not through SSO) can have their invitations resent
+            - code: STATUS_MISMATCH
+              description: only users in INVITED status can have their invitations resent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/users/{id}/revoke-invite:
+    put:
+      operationId: revokeUserInvite
+      description: |-
+        Revoke invitation for a User that has not yet accepted it
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `MANAGE_OWN_USERS`
+          * `MANAGE_ANY_USERS`
+
+        __Generates Audit Log Entry:__ `REVOKE_USER_INVITE`
+      tags:
+        - user
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - MANAGE_OWN_USERS
+        - MANAGE_ANY_USERS
+      x-audit-log: REVOKE_USER_INVITE
+      parameters:
+        - $ref: '#/components/parameters/Identifier'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `AUTH_METHOD_MISMATCH` - only Users from Organisations authenticated through the Platform (not through SSO) can have their invitations revoked
+            *  `STATUS_MISMATCH` - only users in INVITED status can have their invitations revoked
+          x-errors:
+            - code: AUTH_METHOD_MISMATCH
+              description: only Users from Organisations authenticated through the Platform (not through SSO) can have their invitations revoked
+            - code: STATUS_MISMATCH
+              description: only users in INVITED status can have their invitations revoked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/users/{id}/suspend:
+    put:
+      operationId: suspendUser
+      description: |-
+        Suspend a specified User
+
+        What happens on suspending:
+          - any active sessions the User has are going to be terminated
+          - subsequent login attempts are blocked
+          - API Key usage gets blocked
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `MANAGE_OWN_USERS`
+          * `MANAGE_ANY_USERS`
+
+        __Generates Audit Log Entry:__ `SUSPEND_USER`
+      tags:
+        - user
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - MANAGE_OWN_USERS
+        - MANAGE_ANY_USERS
+      x-audit-log: SUSPEND_USER
+      parameters:
+        - $ref: '#/components/parameters/Identifier'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `AUTH_METHOD_MISMATCH` - only Users from Organisations authenticated through the Platform (not through SSO) can be suspended
+            *  `STATUS_MISMATCH` - only users in ACTIVE status can be suspended
+          x-errors:
+            - code: AUTH_METHOD_MISMATCH
+              description: only Users from Organisations authenticated through the Platform (not through SSO) can be suspended
+            - code: STATUS_MISMATCH
+              description: only users in ACTIVE status can be suspended
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/users/{id}/unsuspend:
+    put:
+      operationId: unsuspendUser
+      description: |-
+        Unsuspends a specified User
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `MANAGE_OWN_USERS`
+          * `MANAGE_ANY_USERS`
+
+        __Generates Audit Log Entry:__ `UNSUSPEND_USER`
+      tags:
+        - user
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - MANAGE_OWN_USERS
+        - MANAGE_ANY_USERS
+      x-audit-log: UNSUSPEND_USER
+      parameters:
+        - $ref: '#/components/parameters/Identifier'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `AUTH_METHOD_MISMATCH` - only Users from Organisations authenticated through the Platform (not through SSO) can be suspended
+            *  `STATUS_MISMATCH` - only users in SUSPENDED status can be unsuspended
+          x-errors:
+            - code: AUTH_METHOD_MISMATCH
+              description: only Users from Organisations authenticated through the Platform (not through SSO) can be suspended
+            - code: STATUS_MISMATCH
+              description: only users in SUSPENDED status can be unsuspended
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/users/{id}/reset-second-auth-factor:
+    put:
+      operationId: resetUserSecondAuthFactor
+      description: |-
+        Resets the second authentication factor for a specified user
+
+        ---
+
+        __Requires Permission:__ (at least one)
+          * `MANAGE_OWN_USERS`
+          * `MANAGE_ANY_USERS`
+
+        __Generates Audit Log Entry:__ `RESET_USER_SECOND_AUTH_FACTOR`
+      tags:
+        - user
+      security:
+        - ApiKey: []
+        - AuthToken: []
+      x-permissions:
+        - MANAGE_OWN_USERS
+        - MANAGE_ANY_USERS
+      x-audit-log: RESET_USER_SECOND_AUTH_FACTOR
+      parameters:
+        - $ref: '#/components/parameters/Identifier'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          description: |-
+            __Bad Request__
+
+            *  `AUTH_METHOD_MISMATCH` - only Users from Organisations authenticated through the Platform (not through SSO) can have their 2nd authenticator factor reset
+          x-errors:
+            - code: AUTH_METHOD_MISMATCH
+              description: only Users from Organisations authenticated through the Platform (not through SSO) can have their 2nd authenticator factor reset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  schemas:
+    AggregatedNominationOptions:
+      type: object
+      required:
+        - nominatorOnBehalf
+      properties:
+        nominatorOnBehalf:
+          type: boolean
+        nomineeParticipants:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - name
+            properties:
+              id:
+                $ref: '#/components/schemas/Identifier'
+              name:
+                type: string
+    AggregatedNominations:
+      type: object
+      required:
+        - mpn
+        - gb
+        - fr
+      properties:
+        mpn:
+          $ref: '#/components/schemas/AggregatedNominationsValues'
+        gb:
+          $ref: '#/components/schemas/AggregatedNominationsValues'
+        fr:
+          $ref: '#/components/schemas/AggregatedNominationsValues'
+    AggregatedNominationsValues:
+      type: object
+      required:
+        - mtuSize
+        - mtus
+      properties:
+        mtuSize:
+          $ref: '#/components/schemas/MtuSize'
+        mtus:
+          type: array
+          items:
+            type: object
+            required:
+              - mtu
+              - values
+              - nettedNominations
+            properties:
+              mtu:
+                $ref: '#/components/schemas/MtuStart'
+              values:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - direction
+                    - value
+                  properties:
+                    direction:
+                      $ref: '#/components/schemas/BorderDirection'
+                    value:
+                      $ref: '#/components/schemas/Capacity'
+              nettedNominations:
+                type: object
+                description: |
+                  * `flow` - The smaller direction and deduct its aggregated nomination value from the larger direction's aggregated nomination value to get the flow
+                required:
+                  - direction
+                  - flow
+                properties:
+                  direction:
+                    $ref: '#/components/schemas/BorderDirection'
+                  flow:
+                    $ref: '#/components/schemas/Capacity'
+    AggregatedPreNominationOptions:
+      type: object
+      required:
+        - longTerm
+        - dayAhead
+        - intraDay
+      properties:
+        longTerm:
+          type: array
+          items:
+            $ref: '#/components/schemas/AggregatedPreNominationOptionsTimescale'
+        dayAhead:
+          type: array
+          items:
+            $ref: '#/components/schemas/AggregatedPreNominationOptionsTimescale'
+        intraDay:
+          type: array
+          items:
+            $ref: '#/components/schemas/AggregatedPreNominationOptionsTimescale'
+    AggregatedPreNominationOptionsTimescale:
+      type: object
+      required:
+        - direction
+        - preNominationsExists
+      properties:
+        direction:
+          $ref: '#/components/schemas/BorderDirection'
+        preNominationsExists:
+          type: boolean
+    ApiKey:
+      type: object
+      required:
+        - id
+        - name
+        - createdAt
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+        createdAt:
+          $ref: '#/components/schemas/DateTime'
+    Attachment:
+      type: object
+      description: |
+        Represents an attachment (file) stored in a persistent way
+
+        - `fileName`: Name of the attachment including extension, example: `attachment.xls`
+        - `fileSize`: Size of the file in bytes, example: `2338`
+        - `mimeType`: Standard MIME type of attachment, example: `application/vnd.ms-excel`
+        - `url`: Address from where the binary file can be downloaded, example: `https://example.com/document.xls`
+      required:
+        - id
+        - fileName
+        - fileSize
+        - mimeType
+        - url
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        fileName:
+          type: string
+        fileSize:
+          $ref: '#/components/schemas/Count'
+        mimeType:
+          type: string
+        url:
+          type: string
+    AuditLog:
+      type: object
+      required:
+        - id
+        - createdAt
+        - user
+        - domain
+        - type
+        - status
+        - description
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        createdAt:
+          $ref: '#/components/schemas/DateTime'
+        user:
+          $ref: '#/components/schemas/AuditLogUser'
+        domain:
+          $ref: '#/components/schemas/AuditLogDomain'
+        type:
+          $ref: '#/components/schemas/AuditLogType'
+        status:
+          $ref: '#/components/schemas/AuditLogStatus'
+        description:
+          type: string
+        impersonatedByUser:
+          $ref: '#/components/schemas/AuditLogUser'
+        requestedWithApiKey:
+          $ref: '#/components/schemas/AuditLogApiKey'
+    AuditLogApiKey:
+      type: object
+      required:
+        - id
+        - name
+        - createdAt
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+        createdAt:
+          $ref: '#/components/schemas/DateTime'
+    AuditLogBatch:
+      type: object
+      required:
+        - entries
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLog'
+        totalCount:
+          $ref: '#/components/schemas/Count'
+    AuditLogDomain:
+      type: string
+      enum:
+        - NTC_MANAGEMENT
+        - ATC_MANAGEMENT
+        - UNPLANNED_OUTAGES
+        - PLANNED_OUTAGES
+        - NOMINATIONS
+        - DEFAULT_NOMINATIONS
+        - NOMINATION_CANCELLATION
+        - CRISIS_MANAGEMENT
+        - ATTACHMENTS
+        - ORGANISATIONS
+        - USERS
+        - PROFILE
+        - PARTICIPANT_DASHBOARD
+        - BPP
+        - MANUAL_FILE_UPLOAD
+        - BUSINESS_SETTINGS
+        - BUSINESS_PROCESSES
+        - DATA_FLOWS
+    AuditLogPayload:
+      type: object
+      required:
+        - id
+        - payload
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        payload:
+          type: string
+        logViewerUrl:
+          type: string
+    AuditLogSortBy:
+      type: string
+      enum:
+        - CREATED_AT_ASC
+        - CREATED_AT_DESC
+    AuditLogStatus:
+      type: string
+      enum:
+        - SUCCESS
+        - FAILURE
+    AuditLogType:
+      type: string
+      enum:
+        - SUBMIT_NTC
+        - SUBMIT_ATC
+        - CREATE_UNPLANNED_OUTAGE
+        - UPDATE_UNPLANNED_OUTAGE
+        - CANCEL_UNPLANNED_OUTAGE
+        - END_UNPLANNED_OUTAGE
+        - CREATE_PLANNED_OUTAGE
+        - UPDATE_PLANNED_OUTAGE
+        - DELETE_PLANNED_OUTAGE
+        - CANCEL_PLANNED_OUTAGE
+        - SUBMIT_NOMINATIONS
+        - CREATE_DEFAULT_NOMINATION
+        - UPDATE_DEFAULT_NOMINATION
+        - DELETE_DEFAULT_NOMINATION
+        - CANCEL_LONG_TERM_OR_DAY_AHEAD_NOMINATION_GATE
+        - CANCEL_INTRA_DAY_NOMINATION_GATES
+        - RESEND_CRISIS_REMIT
+        - BYPASS_CRISIS_REMIT
+        - COMPLETE_CRISIS_STATIC_TASK
+        - EXECUTE_CRISIS_CURTAILMENT
+        - DISMISS_CRISIS_BPP
+        - POST_CRISIS_PARTICIPANT_MESSAGE
+        - UPLOAD_ATTACHMENT
+        - CREATE_PARTICIPANT_ORGANISATION
+        - UPDATE_PARTICIPANT_ORGANISATION
+        - UPDATE_USER
+        - INVITE_USER
+        - BULK_INVITE_USERS
+        - RESEND_USER_INVITE
+        - REVOKE_USER_INVITE
+        - SUSPEND_USER
+        - UNSUSPEND_USER
+        - RESET_USER_SECOND_AUTH_FACTOR
+        - IMPERSONATE_USER
+        - UPDATE_PROFILE_DETAILS
+        - UPDATE_PREFERENCES
+        - CREATE_API_KEY
+        - DELETE_API_KEY
+        - SUBMIT_PARTICIPANT_DASHBOARD_NOMINATIONS
+        - SUBMIT_BPP_PURCHASE_FORM
+        - SET_BPP_SUBMISSION_STATUS
+        - RESUBMIT_BPP_SUBMISSION
+        - UPLOAD_NOMINATIONS
+        - UPDATE_LONG_TERM_OR_DAY_AHEAD_NOMINATION_WINDOWS_BUSINESS_SETTINGS
+        - UPDATE_INTRA_DAY_NOMINATION_WINDOWS_BUSINESS_SETTINGS
+        - UPDATE_BPP_PROVIDER_BUSINESS_SETTINGS
+        - MANUAL_START_BUSINESS_PROCESS_WORKFLOW
+        - RESCHEDULE_BUSINESS_PROCESS_WORKFLOW
+        - SKIP_BUSINESS_PROCESS_WORKFLOW
+        - RESOLVE_BUSINESS_PROCESS_STEP
+        - RE_RUN_BUSINESS_PROCESS_STEP
+        - PROCESS_DATA_FLOW_VERSION
+        - CREATE_DATA_FLOW
+        - UPDATE_DATA_FLOW
+    AuditLogUser:
+      type: object
+      required:
+        - id
+        - name
+        - role
+        - organisation
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+        role:
+          $ref: '#/components/schemas/UserRole'
+        organisation:
+          $ref: '#/components/schemas/AuditLogUserOrganisation'
+    AuditLogUserOrganisation:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+    BorderDirection:
+      type: string
+      description: Denotes the direction on the cable between Great Britain and the Netherlands
+      enum:
+        - GB_FR
+        - FR_GB
+    BorderDirectionWithBoth:
+      type: string
+      description: Same as BorderDirection, but with both option added
+      enum:
+        - GB_FR
+        - FR_GB
+        - BOTH
+    BorderDirectionWithBothAndNone:
+      type: string
+      description: Same as BorderDirection, but with both and none option added
+      enum:
+        - GB_FR
+        - FR_GB
+        - BOTH
+        - NONE
+    BulkInviteOrganisationUsersRequest:
+      type: object
+      required:
+        - attachmentId
+      properties:
+        attachmentId:
+          $ref: '#/components/schemas/Identifier'
+    BulkInvitedOrganisationUsers:
+      type: object
+      required:
+        - totalCount
+      properties:
+        totalCount:
+          $ref: '#/components/schemas/Count'
+    BusinessProcessContentBlock:
+      oneOf:
+        - $ref: '#/components/schemas/BusinessProcessForkBlock'
+        - $ref: '#/components/schemas/BusinessProcessStepBlock'
+      discriminator:
+        propertyName: blockType
+        mapping:
+          FORK: '#/components/schemas/BusinessProcessForkBlock'
+          STEP: '#/components/schemas/BusinessProcessStepBlock'
+    BusinessProcessForkBlock:
+      type: object
+      required:
+        - blockType
+        - blocks
+      properties:
+        blockType:
+          type: string
+        blocks:
+          type: array
+          items:
+            type: array
+            items:
+              $ref: '#/components/schemas/BusinessProcessContentBlock'
+    BusinessProcessStepAttempt:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: '#/components/schemas/BusinessProcessStepStatus'
+        startedAt:
+          $ref: '#/components/schemas/DateTime'
+        endedAt:
+          $ref: '#/components/schemas/DateTime'
+        failReason:
+          type: string
+    BusinessProcessStepBlock:
+      type: object
+      required:
+        - blockType
+        - stepType
+        - logicType
+        - resolvable
+        - rerunnable
+        - attempts
+      properties:
+        blockType:
+          type: string
+        stepType:
+          $ref: '#/components/schemas/BusinessProcessStepType'
+        logicType:
+          $ref: '#/components/schemas/BusinessProcessStepLogicType'
+        dataFlowDirection:
+          $ref: '#/components/schemas/DataFlowDirection'
+        interface:
+          $ref: '#/components/schemas/Interface'
+        id:
+          $ref: '#/components/schemas/Identifier'
+        resolvable:
+          type: boolean
+        rerunnable:
+          type: boolean
+        attempts:
+          type: array
+          items:
+            $ref: '#/components/schemas/BusinessProcessStepAttempt'
+        file:
+          $ref: '#/components/schemas/Attachment'
+    BusinessProcessStepLogicType:
+      type: string
+      enum:
+        - INTERNAL_LOGIC
+        - REQUEST_GENERATION
+        - REQUEST_SENDING
+        - RESPONSE_POLLING
+        - RESPONSE_PROCESSING
+        - REQUEST_PROCESSING
+        - RESPONSE_SENDING
+    BusinessProcessStepStatus:
+      type: string
+      enum:
+        - SCHEDULED
+        - CANCELLED
+        - PENDING
+        - IN_PROGRESS
+        - FAILED
+        - RESOLVED
+        - SUCCEEDED
+    BusinessProcessStepType:
+      type: object
+      required:
+        - id
+        - displayName
+      properties:
+        id:
+          $ref: '#/components/schemas/BusinessProcessStepTypeId'
+        displayName:
+          type: string
+    BusinessProcessStepTypeId:
+      type: string
+      description: Internal ID of a "Step Type" (e.g `CAPACITY_CHECK`, `GENERATE_OC_SUBMISSION`, etc)
+    BusinessProcessWorkflowVirtualId:
+      type: string
+      description: |
+        Virtual ID of a "Workflow" in the following format `{recurringWorkflowId}:{executionDay}`
+
+        Example: `684df173-4110-4e0d-b364-d2364388afe3:2024-06-01`
+      pattern: ^([0-9a-f]{8}\-[0-9a-f]{4}\-[0-9a-f]{4}\-[0-9a-f]{4}\-[0-9a-f]{12})\:([0-9]{4}\-[0-9]{2}\-[0-9]{2})$
+    Capacity:
+      type: integer
+      description: Capacity value in kilowatts (kW) - the required system precision allows for handling capacity values as integers
+      format: int64
+    Count:
+      type: integer
+      description: Natural numbers {0, 1, 2, 3, ...} used for counting elements
+      format: int64
+      minimum: 0
+    CreateApiKeyRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+    CreateDefaultNominationRequest:
+      type: object
+      required:
+        - timescale
+        - borderDirection
+        - deliveryPeriodStart
+        - mtus
+      properties:
+        timescale:
+          $ref: '#/components/schemas/Timescale'
+        borderDirection:
+          $ref: '#/components/schemas/BorderDirection'
+        deliveryPeriodStart:
+          $ref: '#/components/schemas/Date'
+        deliveryPeriodEnd:
+          $ref: '#/components/schemas/Date'
+        mtus:
+          type: array
+          items:
+            $ref: '#/components/schemas/DefaultNominationMtu'
+    CreatedApiKey:
+      type: object
+      required:
+        - id
+        - name
+        - token
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+        token:
+          type: string
+    CreatedDefaultNomination:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+    DashboardNextNominationGate:
+      type: object
+      required:
+        - timescale
+        - window
+        - deliveryPeriod
+        - status
+        - nextActionAt
+      properties:
+        timescale:
+          $ref: '#/components/schemas/Timescale'
+        window:
+          type: object
+          required:
+            - opensAt
+            - closesAt
+          properties:
+            opensAt:
+              $ref: '#/components/schemas/DateTime'
+            closesAt:
+              $ref: '#/components/schemas/DateTime'
+        deliveryPeriod:
+          $ref: '#/components/schemas/MtuPeriod'
+        status:
+          $ref: '#/components/schemas/DashboardNextNominationWindowStatus'
+        nextActionAt:
+          $ref: '#/components/schemas/DateTime'
+    DashboardNextNominationWindowStatus:
+      type: string
+      enum:
+        - NOT_YET_OPEN
+        - OPEN
+    DataFlowDirection:
+      type: string
+      enum:
+        - INCOMING
+        - OUTGOING
+    Date:
+      type: string
+      description: |
+        One single calendar day, interpreted in **System Time**
+
+        - ISO 8601 compliant string in `yyyy-mm-dd` format
+      format: date
+      example: '2022-01-04'
+    DateTime:
+      type: string
+      description: |
+        Date and time with zone information, marks an **absolute point** on the timeline
+
+        - theoretically can be sent and received with any zone offset (until it marks the desired **absolute point** on the timeline)
+        - in practice it is advised to transfer it in UTC timezone (with Z offset, "Zulu time")
+        - ISO 8601 compliant string in `yyyy-mm-ddThh:mm:ss.SSSZ` format
+      format: date-time
+      example: '2022-01-04T00:00:00.000Z'
+    DefaultNomination:
+      type: object
+      required:
+        - id
+        - timescale
+        - deliveryPeriodStart
+        - borderDirection
+        - status
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        timescale:
+          $ref: '#/components/schemas/Timescale'
+        deliveryPeriodStart:
+          $ref: '#/components/schemas/Date'
+        deliveryPeriodEnd:
+          $ref: '#/components/schemas/Date'
+        borderDirection:
+          $ref: '#/components/schemas/BorderDirection'
+        status:
+          $ref: '#/components/schemas/DefaultNominationStatus'
+    DefaultNominationBatch:
+      type: object
+      required:
+        - entries
+        - totalCount
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/DefaultNomination'
+        totalCount:
+          $ref: '#/components/schemas/Count'
+    DefaultNominationDeclarationType:
+      type: string
+      enum:
+        - PERCENT_100
+        - VALUE
+    DefaultNominationDetails:
+      type: object
+      required:
+        - id
+        - timescale
+        - borderDirection
+        - deliveryPeriodStart
+        - mtus
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        timescale:
+          $ref: '#/components/schemas/Timescale'
+        borderDirection:
+          $ref: '#/components/schemas/BorderDirection'
+        deliveryPeriodStart:
+          $ref: '#/components/schemas/Date'
+        deliveryPeriodEnd:
+          $ref: '#/components/schemas/Date'
+        mtus:
+          type: array
+          items:
+            $ref: '#/components/schemas/DefaultNominationMtu'
+    DefaultNominationMtu:
+      type: object
+      required:
+        - mtu
+        - type
+      properties:
+        mtu:
+          $ref: '#/components/schemas/LocalMtuStart'
+        type:
+          $ref: '#/components/schemas/DefaultNominationDeclarationType'
+        value:
+          $ref: '#/components/schemas/Capacity'
+    DefaultNominationOptions:
+      type: object
+      required:
+        - mtuSizes
+      properties:
+        mtuSizes:
+          type: array
+          items:
+            $ref: '#/components/schemas/MtuSizePerTimescale'
+    DefaultNominationSortBy:
+      type: string
+      enum:
+        - TIMESCALE_ASC
+        - TIMESCALE_DESC
+        - DELIVERY_PERIOD_START_ASC
+        - DELIVERY_PERIOD_START_DESC
+        - DELIVERY_PERIOD_END_ASC
+        - DELIVERY_PERIOD_END_DESC
+        - BORDER_DIRECTION_ASC
+        - BORDER_DIRECTION_DESC
+    DefaultNominationStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - DELETED
+    Email:
+      type: string
+      format: email
+      pattern: ^[\w-\.]+@([\w-]+\.)+[\w-]{2,6}$
+    ErrorCode:
+      type: string
+      enum:
+        - ACTIVE_UNPLANNED_OUTAGE_EXISTS
+        - ALREADY_EXPIRED
+        - API_CONTRACT_VALIDATION_ERROR
+        - API_KEY_NAME_NOT_UNIQUE
+        - AUCTION_BATCH_CREATE_UNAVAILABLE
+        - AUCTION_RESULTS_NOT_AVAILABLE
+        - AUCTION_UNDER_PROCESSING
+        - AUTH_METHOD_MISMATCH
+        - BIDDING_NOT_POSSIBLE
+        - BMU_DEMAND_CODE_MUST_BE_UNIQUE
+        - BMU_GENERATION_CODE_MUST_BE_UNIQUE
+        - BUSINESS_DAY_PERIOD_TOO_LONG
+        - CANCEL_DEADLINE_MISSED
+        - CANNOT_IMPERSONATE_SELF
+        - CANNOT_IMPERSONATE_NESTED
+        - CAPACTY_ALREADY_ALLOCATED
+        - CLOSURE_TIMES_MISALIGNED
+        - CREDIT_LIMIT_EXCEEDED
+        - CREDIT_LIMIT_TO_BE_EXCEECED
+        - CURTAILMENT_NOT_POSSIBLE
+        - DELIVERY_DAY_TOO_EARLY
+        - DELIVERY_DAY_TOO_LATE
+        - DELIVERY_DAY_TOO_SOON
+        - DELIVERY_PERIOD_END_TOO_LATE
+        - DELIVERY_PERIOD_ERROR
+        - DELIVERY_PERIOD_START_TOO_SOON
+        - DELIVERY_PERIOD_TOO_LONG
+        - DATA_FLOW_NOT_CREATABLE
+        - DATA_FLOW_NOT_EDITABLE
+        - DATA_FLOW_UNDER_PROCESSING
+        - DATE_IN_PAST_ERROR
+        - DATE_PERIOD_MISALIGNED
+        - DATE_PERIOD_TOO_LONG
+        - DELETE_DEADLINE_MISSED
+        - DISMISS_BPP_NOT_POSSIBLE
+        - EIC_CODE_SHOULD_BE_UNIQUE
+        - EMAIL_ADDRESS_NOT_UNIQUE
+        - ENTITY_CANNOT_BE_UPDATED
+        - EXECUTION_PERIOD_TOO_LONG
+        - FIRST_DAY_TOO_SOON
+        - FIRST_MTU_STARTED
+        - FIRST_MTU_ERROR
+        - FORBIDDEN
+        - GATE_CLOSE_TOO_CLOSE_TO_MTU
+        - GATE_MISALIGNED
+        - GATE_OPEN_TOO_LATE
+        - GLOBAL_MTU_SIZE_MISMATCH
+        - HELPDESK_PIN_SHOULD_BE_UNIQUE
+        - INTERNAL_SERVER_ERROR
+        - INVALID_ACCOUNTING_CODE
+        - INVALID_ATTACHMENT_FILE_TYPE
+        - INVALID_ATTACHMENT_ID
+        - INVALID_BID_ID
+        - INVALID_BID_CAPACITY
+        - INVALID_BPP_MARKET
+        - INVALID_BID_PRICE
+        - INVALID_BPP_PROVIDER
+        - INVALID_CLOSURE_TIME
+        - INVALID_CURTAILMENT_MTUS
+        - INVALID_DATA_FLOW_TYPE_ID
+        - INVALID_DIRECTION_ENTRIES
+        - INVALID_DIRECTIONAL_VALUES
+        - INVALID_DELIVERY_DAY
+        - INVALID_EXECUTION_DAY
+        - INVALID_EXPIRY_DAY
+        - INVALID_ID_AUCTION_PRODUCT_TYPE
+        - INVALID_INTERFACE_ID
+        - INVALID_LINE_ITEM_ID
+        - INVALID_MTU
+        - INVALID_NEW_PERIOD_START
+        - INVALID_NOMINATION_GATE
+        - INVALID_NOMINATION_VALUE
+        - INVALID_NOTICEBOARD_ENTRY
+        - INVALID_NOTICE_CAPACITY
+        - INVALID_NOTICE_PRICE
+        - INVALID_NTC_OVERRIDE_VALUE
+        - INVALID_ORGANISATION_ID
+        - INVALID_OUTAGE_PERIOD_VALUE
+        - INVALID_PARTICIPANT_EIC_CODE
+        - INVALID_PARTICIPANT_FILTER
+        - INVALID_PARTICIPANT_ID
+        - INVALID_PERIOD_AMOUNT
+        - INVALID_PURCHASE_VALUE
+        - INVALID_RESERVE_PRICE
+        - INVALID_RESCHEDULE_AT
+        - INVALID_RESPONSE_CAPACITY
+        - INVALID_RESPONSE_PRICE
+        - INVALID_RETURN_CAPACITY
+        - RETURNS_WINDOW_CLOSED
+        - INVALID_STATUS
+        - INVALID_SUBMISSION_ID
+        - INVALID_TARGET_NTC_VALUE
+        - INVALID_TRADE_TYPE
+        - INVALID_TRANSFER_CAPACITY
+        - INVALID_TSO_ID
+        - INVALID_UNPLANNED_OUTAGE_ID
+        - INVALID_USER_ID
+        - INVALID_VIRTUAL_WORKFLOW_ID
+        - INVALID_WORKFLOW_TYPE_ID
+        - LAST_DAY_TOO_LATE
+        - LONG_TERM_DELIVERY_PERIOD_MISMATCH
+        - MARKET_NOMINATION_SETTING_LOCKED
+        - MARKET_NOMINATION_SETTING_MISMATCH
+        - MISSING_CANCELLATION_MESSAGE
+        - MISSING_DIRECTIONAL_CONFIG
+        - MISSING_EXECUTION_MESSAGE
+        - MISSING_MANUAL_VALUE
+        - MISSING_PRIORITY
+        - MISSING_VAT_RATE_MARKET
+        - MTU_BORDER_MISMATCH
+        - MTU_LIST_GATES_MISALIGNED
+        - MTU_LIST_MISALIGNED
+        - MTU_NOT_EDITABLE
+        - MTU_PERIOD_OVERLAP
+        - MTU_ALREADY_LOCKED
+        - NO_ACTIVE_CRISIS
+        - NO_EXCHANGE_RATE
+        - NO_OFFERS_PRESENT
+        - NOMINATION_GATE_NOT_CANCELLABLE
+        - NOMINATIONS_CANNOT_BE_SUBMITTED
+        - NOT_FOUND
+        - OC_DEFINITION_MISMATCH
+        - OC_LARGER_THAN_MAX_ATC
+        - OC_UNDEFINED
+        - OC_VALUE_MISMATCH
+        - ORGANISATION_CANNOT_BE_LOCKED
+        - ORGANISATION_NAME_MUST_BE_UNIQUE
+        - ORGANISATION_TYPE_MISMATCH
+        - OUTAGE_PERIOD_CANNOT_BE_REMOVED
+        - OUTAGE_PERIOD_TOO_SHORT
+        - OUTAGE_PERIODS_CROSS_OVER_YEAR
+        - OUTAGE_PERIODS_UNORDERED
+        - OUTAGE_TOO_LONG
+        - PERIOD_CANNOT_BE_REMOVED
+        - PERIOD_END_TOO_LATE
+        - PERIOD_MISALIGNED
+        - PERIOD_OVERLAP
+        - PERIOD_START_TOO_SOON
+        - PERIOD_TOO_LONG
+        - PERIOD_NOT_WHOLE_MONTHS
+        - PERIODS_OVERLAP
+        - PERIODS_UNORDERED
+        - PRICE_RANGE_MISMATCH
+        - PROCESS_STEPS_DST_ERROR
+        - PROCESS_STEPS_MISALIGNED
+        - PROCESS_STEPS_GAP_ERROR
+        - PROCESS_STEP_PRECISION_ERROR
+        - PROCESS_STEP_BOUNDARY_ERROR
+        - PROCESSING_ERROR
+        - PRODUCT_TYPE_MISMATCH
+        - REPORTING_PERIOD_OVERLAP
+        - REPORT_GENERATION_ERROR
+        - ROLE_MISMATCH
+        - SCHEMA_MISMATCH
+        - SCHEMA_VALIDATION_ERROR
+        - STATIC_TASK_ALREADY_COMPLETED
+        - STATUS_MISMATCH
+        - TARGET_NTC_MISSING
+        - TIMESCALE_MISMATCH
+        - TOO_MANY_BIDS
+        - TOO_MANY_PERIODS
+        - TRANSFER_DATE_PERIOD_TOO_LONG
+        - TRANCHE_SIZE_MISMATCH
+        - UNAUTHORIZED
+        - UNDER_MTU_SIZE_MINIMUM
+        - UPDATE_DEADLINE_MISSED
+        - VALIDITY_PERIOD_MISMATCH
+        - VAT_NUMBER_MISSING
+        - VAT_RATE_MARKET_MISMATCH
+        - VERSION_MISMATCH
+        - WINDOW_OPEN_TIME_OUT_OF_BOUNDS
+        - WINDOW_CLOSE_TIME_OUT_OF_BOUNDS
+        - WORKFLOW_ALREADY_RESCHEDULED
+        - WORKFLOW_ALREADY_SKIPPED
+        - WORKFLOW_NOT_RESCHEDULEABLE
+        - WORKFLOW_NOT_SKIPPABLE
+    ErrorResponse:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          $ref: '#/components/schemas/ErrorCode'
+        message:
+          type: string
+        nestedErrors:
+          type: array
+          items:
+            $ref: '#/components/schemas/NestedError'
+        params:
+          additionalProperties:
+            type: string
+        requestId:
+          type: string
+        debugError:
+          type: string
+    FileName:
+      type: string
+      pattern: ^[a-zA-Z0-9._-]+$
+    Identifier:
+      type: string
+      description: Unique identifier for the record in UUID4 format
+      format: uuid
+      example: 8d3787bb-b9ce-4d75-9a75-074ddd5d1e09
+    Interface:
+      type: object
+      required:
+        - id
+        - displayName
+      properties:
+        id:
+          $ref: '#/components/schemas/InterfaceId'
+        displayName:
+          type: string
+    InterfaceId:
+      type: string
+      description: Internal ID of an "Interface" (e.g `NESO`, `RTE`, etc)
+    IntraDayNominationGate:
+      type: object
+      required:
+        - id
+        - productType
+        - name
+        - deliveryDay
+        - mtuPeriod
+        - status
+      properties:
+        id:
+          $ref: '#/components/schemas/BusinessProcessWorkflowVirtualId'
+        productType:
+          $ref: '#/components/schemas/IntraDayProductType'
+        name:
+          type: string
+        deliveryDay:
+          $ref: '#/components/schemas/Date'
+        mtuPeriod:
+          $ref: '#/components/schemas/LocalMtuPeriod'
+        status:
+          $ref: '#/components/schemas/NominationGateStatus'
+    IntraDayProductType:
+      type: string
+      enum:
+        - ID_01
+        - ID_02
+        - ID_03
+    InviteOrganisationUserRequest:
+      type: object
+      required:
+        - email
+        - role
+      properties:
+        email:
+          $ref: '#/components/schemas/Email'
+        role:
+          $ref: '#/components/schemas/UserRole'
+    InvitedOrganisationUser:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+    LocalMtuEnd:
+      type: string
+      description: |
+        The last moment (exclusive) of an MTU period in local time, minute resolution, interpreted in **System Time**
+
+        - string, interpreted in `hh:mm` format
+        - only `XX:00`, `XX:15`, `XX:30` and `XX:45` are valid values (depending on MTU size)
+      format: string
+      example: '18:00'
+      pattern: ^(0[0-9]|1[0-9]|2[0-3]):(00|15|30|45)$
+    LocalMtuPeriod:
+      description: |
+        Period of MTUs in local time aligned to MTU borders in a natural way, meaning:
+
+        * with 60 min MTUs if start is 10:00 and end is 11:00 => it means a single MTU between 10:00 and 11:00
+        * with 30 min MTUs if start is 10:00 and end is 11:00 => it means the two MTUs between 10:00-10:30 and 10:30-11:00
+      required:
+        - fromMtuStart
+        - toMtuEnd
+      properties:
+        fromMtuStart:
+          $ref: '#/components/schemas/LocalMtuStart'
+        toMtuEnd:
+          $ref: '#/components/schemas/LocalMtuEnd'
+    LocalMtuStart:
+      type: string
+      description: |
+        The first moment (inclusive) of an MTU period in local time, minute resolution, interpreted in **System Time**
+
+        - string, interpreted in `hh:mm` format
+        - only `XX:00`, `XX:15`, `XX:30` and `XX:45` are valid values (depending on MTU size)
+      format: string
+      example: '10:00'
+      pattern: ^(0[0-9]|1[0-9]|2[0-3]):(00|15|30|45)$
+    LongTermOrDayAheadNominationGate:
+      type: object
+      required:
+        - deliveryDay
+        - timescale
+        - status
+      properties:
+        deliveryDay:
+          $ref: '#/components/schemas/Date'
+        timescale:
+          $ref: '#/components/schemas/TimescaleLongTermOrDayAhead'
+        status:
+          $ref: '#/components/schemas/NominationGateStatus'
+    ManualFileUploadRequest:
+      type: object
+      required:
+        - attachmentId
+      properties:
+        attachmentId:
+          $ref: '#/components/schemas/Identifier'
+    Message:
+      type: object
+      required:
+        - id
+        - receivedAt
+        - category
+        - sender
+        - severity
+        - type
+        - subject
+        - body
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        receivedAt:
+          $ref: '#/components/schemas/DateTime'
+        category:
+          $ref: '#/components/schemas/MessageCategory'
+        sender:
+          $ref: '#/components/schemas/MessageSender'
+        severity:
+          $ref: '#/components/schemas/MessageSeverity'
+        type:
+          $ref: '#/components/schemas/MessageType'
+        subject:
+          type: string
+        body:
+          type: string
+        read:
+          type: boolean
+        entityId:
+          type: string
+        attachment:
+          $ref: '#/components/schemas/Attachment'
+    MessageBatch:
+      type: object
+      required:
+        - entries
+        - totalCount
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+        totalCount:
+          $ref: '#/components/schemas/Count'
+    MessageCategory:
+      type: string
+      enum:
+        - GENERAL
+        - OPERATIONAL
+        - PARTICIPANT
+    MessageSender:
+      type: string
+      enum:
+        - ICO
+        - SYSTEM
+    MessageSeverity:
+      type: string
+      enum:
+        - CRITICAL_ALERT
+        - CRITICAL
+        - MAJOR
+        - NORMAL
+    MessageSortBy:
+      type: string
+      enum:
+        - SEVERITY_ASC
+        - SEVERITY_DESC
+        - SENDER_ASC
+        - SENDER_DESC
+        - TYPE_ASC
+        - TYPE_DESC
+        - RECEIVED_AT_ASC
+        - RECEIVED_AT_DESC
+    MessageType:
+      type: string
+      enum:
+        - BPP
+        - JAO
+        - MANUAL_MESSAGE
+        - NOMINATION
+        - OPERATIONAL_DATAFLOW
+        - OPERATIONAL_PROCESS
+        - PARTICIPANT_CONFIGURATION
+        - PLANNED_OUTAGE
+        - PROCESS
+        - TRANSPARENCY_DATAFLOW
+        - UNPLANNED_OUTAGE
+    MtuEnd:
+      type: string
+      description: |
+        The last moment (exclusive) of an MTU period
+
+        - theoretically can be sent and received with any zone offset (until it marks the desired **absolute MTU start point** on the timeline)
+        - in practice it is advised to transfer it in UTC timezone (with Z offset, "Zulu time")
+        - ISO 8601 compliant string in `yyyy-mm-ddThh:mm:ss.SSSZ` format
+        - only with `XX:00:00`, `XX:15:00`, `XX:30:00` and `XX:45:00` time parts are valid values (depending on MTU size)
+      format: date-time
+      example: '2022-01-04T11:00:00.000Z'
+      pattern: ^.*T.*:(00|15|30|45):00(\.0+)?(Z|\+.*)$
+    MtuPeriod:
+      type: object
+      description: |
+        Period of MTUs in **absolute date and time** aligned to MTU borders in a natural way, meaning:
+
+        * with 60 min MTUs if start is 10:00 and end is 11:00 => it means a single MTU between 10:00 and 11:00
+        * with 30 min MTUs if start is 10:00 and end is 11:00 => it means the two MTUs between 10:00-10:30 and 10:30-11:00
+      required:
+        - fromMtuStart
+        - toMtuEnd
+      properties:
+        fromMtuStart:
+          $ref: '#/components/schemas/MtuStart'
+        toMtuEnd:
+          $ref: '#/components/schemas/MtuEnd'
+    MtuSize:
+      type: string
+      description: MTU of 15, 30 or 60 minutes
+      enum:
+        - MTU_15_MINS
+        - MTU_30_MINS
+        - MTU_60_MINS
+    MtuSizePerTimescale:
+      type: object
+      required:
+        - timescale
+        - mtuSize
+      properties:
+        timescale:
+          $ref: '#/components/schemas/Timescale'
+        mtuSize:
+          $ref: '#/components/schemas/MtuSize'
+    MtuStart:
+      type: string
+      description: |
+        The first moment (inclusive) of an MTU period
+
+        - theoretically can be sent and received with any zone offset (until it marks the desired **absolute MTU start point** on the timeline)
+        - in practice it is advised to transfer it in UTC timezone (with Z offset, "Zulu time")
+        - ISO 8601 compliant string in `yyyy-mm-ddThh:mm:ss.SSSZ` format
+        - only with `XX:00:00`, `XX:15:00`, `XX:30:00` and `XX:45:00` time parts are valid values (depending on MTU size)
+      format: date-time
+      example: '2022-01-04T10:00:00.000Z'
+      pattern: ^.*T.*:(00|15|30|45):00(\.0+)?(Z|\+.*)$
+    NestedError:
+      type: object
+      required:
+        - code
+      properties:
+        fieldName:
+          type: string
+        code:
+          type: string
+        message:
+          type: string
+    NominationCapacityResolution:
+      type: string
+      enum:
+        - RES_1_KW
+        - RES_100_KW
+        - RES_500_KW
+        - RES_1_MW
+    NominationGateStatus:
+      type: string
+      enum:
+        - OPEN
+        - CLOSED
+        - NOT_YET_OPEN
+        - CANCELLED
+    NominationGatesOverviewResponse:
+      type: object
+      required:
+        - longTerm
+        - dayAhead
+        - intraDay
+      properties:
+        longTerm:
+          type: object
+          required:
+            - gate
+          properties:
+            gate:
+              $ref: '#/components/schemas/LongTermOrDayAheadNominationGate'
+            nextActionAt:
+              $ref: '#/components/schemas/DateTime'
+        dayAhead:
+          type: object
+          required:
+            - gate
+          properties:
+            gate:
+              $ref: '#/components/schemas/LongTermOrDayAheadNominationGate'
+            nextActionAt:
+              $ref: '#/components/schemas/DateTime'
+        intraDay:
+          type: array
+          items:
+            type: object
+            required:
+              - gate
+            properties:
+              gate:
+                $ref: '#/components/schemas/IntraDayNominationGate'
+              nextActionAt:
+                $ref: '#/components/schemas/DateTime'
+    NotificationPreference:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: boolean
+    NotificationPreferenceWithSms:
+      type: object
+      required:
+        - email
+        - sms
+      properties:
+        email:
+          type: boolean
+        sms:
+          type: boolean
+    Organisation:
+      type: object
+      required:
+        - id
+        - name
+        - status
+        - type
+        - authMethod
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+        status:
+          $ref: '#/components/schemas/OrganisationStatus'
+        type:
+          $ref: '#/components/schemas/OrganisationType'
+        authMethod:
+          $ref: '#/components/schemas/OrganisationAuthMethod'
+        primaryContactName:
+          type: string
+    OrganisationAuthMethod:
+      type: string
+      enum:
+        - PLATFORM
+        - SSO
+    OrganisationContact:
+      type: object
+      required:
+        - name
+        - phone
+        - email
+      properties:
+        name:
+          type: string
+        phone:
+          $ref: '#/components/schemas/PhoneNumber'
+        email:
+          $ref: '#/components/schemas/Email'
+    OrganisationContactInformation:
+      type: object
+      required:
+        - primaryContact
+        - operationalEmergencyContact
+        - helpdeskPin
+      properties:
+        primaryContact:
+          $ref: '#/components/schemas/OrganisationContact'
+        operationalEmergencyContact:
+          $ref: '#/components/schemas/OrganisationContact'
+        helpdeskPin:
+          $ref: '#/components/schemas/OrganisationHelpdeskPin'
+    OrganisationEicCode:
+      type: string
+      pattern: ^([0-9]|[A-Z]|-){16}$
+    OrganisationFileSettings:
+      type: object
+      required:
+        - includeInFpn
+        - includeInDmv
+      properties:
+        includeInFpn:
+          type: boolean
+        includeInDmv:
+          type: boolean
+    OrganisationHelpdeskPin:
+      type: string
+      pattern: ^\d{6}$
+    OrganisationMarketSettings:
+      type: object
+      required:
+        - eicCode
+        - gbNominationSettings
+        - frNominationSettings
+      properties:
+        eicCode:
+          $ref: '#/components/schemas/OrganisationEicCode'
+        gbNominationSettings:
+          type: object
+          required:
+            - ableToNominate
+          properties:
+            ableToNominate:
+              type: boolean
+            bmuDemandCode:
+              type: string
+              minLength: 11
+              maxLength: 11
+            bmuGenerationCode:
+              type: string
+              minLength: 11
+              maxLength: 11
+            onBehalfParticipantId:
+              $ref: '#/components/schemas/Identifier'
+        frNominationSettings:
+          type: object
+          required:
+            - ableToNominate
+          properties:
+            ableToNominate:
+              type: boolean
+            onBehalfParticipantId:
+              $ref: '#/components/schemas/Identifier'
+    OrganisationStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - SSO_PENDING
+    OrganisationType:
+      type: string
+      enum:
+        - ICO
+        - TSO
+        - PARTICIPANT
+    OrganisationUser:
+      type: object
+      required:
+        - id
+        - email
+        - role
+        - invitedAt
+        - status
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+        email:
+          $ref: '#/components/schemas/Email'
+        role:
+          $ref: '#/components/schemas/UserRole'
+        invitedAt:
+          $ref: '#/components/schemas/DateTime'
+        lastLoginAt:
+          $ref: '#/components/schemas/DateTime'
+        lastPasswordChangeAt:
+          $ref: '#/components/schemas/DateTime'
+        status:
+          $ref: '#/components/schemas/UserStatus'
+    OrganisationUserBatch:
+      type: object
+      required:
+        - entries
+        - totalCount
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrganisationUser'
+        totalCount:
+          $ref: '#/components/schemas/Count'
+    OrganisationUserSortBy:
+      type: string
+      enum:
+        - NAME_ASC
+        - NAME_DESC
+        - ROLE_ASC
+        - ROLE_DESC
+        - LAST_LOGIN_ASC
+        - LAST_LOGIN_DESC
+        - STATUS_ASC
+        - STATUS_DESC
+    Participant:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+    ParticipantDashboardDefaultNominationsData:
+      type: object
+      required:
+        - defaultNominationsExist
+      properties:
+        defaultNominationsExist:
+          type: boolean
+    ParticipantDashboardInterconnectorCapacityData:
+      type: object
+      required:
+        - mtuSize
+        - mtus
+      properties:
+        mtuSize:
+          $ref: '#/components/schemas/MtuSize'
+        mtus:
+          type: array
+          maxItems: 8
+          items:
+            type: object
+            required:
+              - mtu
+              - values
+            properties:
+              mtu:
+                $ref: '#/components/schemas/MtuStart'
+              values:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - direction
+                    - data
+                  properties:
+                    direction:
+                      $ref: '#/components/schemas/BorderDirection'
+                    data:
+                      type: object
+                      required:
+                        - mptcNtc
+                        - ntc
+                      properties:
+                        mptcNtc:
+                          $ref: '#/components/schemas/Capacity'
+                        ntc:
+                          $ref: '#/components/schemas/Capacity'
+    ParticipantDashboardInterconnectorCapacityGraphData:
+      type: object
+      required:
+        - mtus
+      properties:
+        mtus:
+          type: array
+          items:
+            type: object
+            required:
+              - mtu
+              - values
+              - nettedNominations
+            properties:
+              mtu:
+                $ref: '#/components/schemas/MtuStart'
+              values:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - direction
+                    - ntc
+                  properties:
+                    direction:
+                      $ref: '#/components/schemas/BorderDirection'
+                    ntc:
+                      $ref: '#/components/schemas/Capacity'
+              nettedNominations:
+                type: object
+                required:
+                  - direction
+                  - flow
+                properties:
+                  direction:
+                    $ref: '#/components/schemas/BorderDirection'
+                  flow:
+                    $ref: '#/components/schemas/Capacity'
+    ParticipantDashboardMessages:
+      type: object
+      required:
+        - general
+        - participant
+      properties:
+        general:
+          type: array
+          maxItems: 3
+          items:
+            $ref: '#/components/schemas/Message'
+        participant:
+          type: array
+          maxItems: 3
+          items:
+            $ref: '#/components/schemas/Message'
+    ParticipantDashboardNettedNominationsData:
+      type: object
+      required:
+        - mtuSize
+        - mtus
+      properties:
+        mtuSize:
+          $ref: '#/components/schemas/MtuSize'
+        mtus:
+          type: array
+          items:
+            type: object
+            required:
+              - mtu
+              - aggregatedNominations
+              - nettedNominations
+            properties:
+              mtu:
+                $ref: '#/components/schemas/MtuStart'
+              aggregatedNominations:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - direction
+                    - value
+                  properties:
+                    direction:
+                      $ref: '#/components/schemas/BorderDirection'
+                    value:
+                      $ref: '#/components/schemas/Capacity'
+              nettedNominations:
+                type: object
+                required:
+                  - flow
+                  - direction
+                properties:
+                  flow:
+                    $ref: '#/components/schemas/Capacity'
+                  direction:
+                    $ref: '#/components/schemas/BorderDirection'
+    ParticipantDashboardNextNominationGates:
+      type: object
+      required:
+        - nominationGates
+      properties:
+        nominationGates:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardNextNominationGate'
+    ParticipantDashboardNominationOptions:
+      type: object
+      required:
+        - longTerm
+        - dayAhead
+        - intraDay
+      properties:
+        longTerm:
+          $ref: '#/components/schemas/ParticipantDashboardNominationOptionsTimescale'
+        dayAhead:
+          $ref: '#/components/schemas/ParticipantDashboardNominationOptionsTimescale'
+        intraDay:
+          $ref: '#/components/schemas/ParticipantDashboardNominationOptionsTimescale'
+    ParticipantDashboardNominationOptionsTimescale:
+      type: object
+      required:
+        - deliveryDays
+        - available
+      properties:
+        deliveryDays:
+          type: array
+          items:
+            $ref: '#/components/schemas/Date'
+        available:
+          type: boolean
+        trDirections:
+          type: array
+          items:
+            $ref: '#/components/schemas/BorderDirection'
+    ParticipantDashboardTransmissionRightsAndNominationsData:
+      type: object
+      required:
+        - mtuSize
+        - mtus
+      properties:
+        mtuSize:
+          $ref: '#/components/schemas/MtuSize'
+        mtus:
+          type: array
+          items:
+            type: object
+            required:
+              - mtu
+              - values
+            properties:
+              mtu:
+                $ref: '#/components/schemas/MtuStart'
+              values:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - direction
+                    - allocatedTrs
+                    - nominatedCapacity
+                  properties:
+                    direction:
+                      $ref: '#/components/schemas/BorderDirection'
+                    allocatedTrs:
+                      $ref: '#/components/schemas/Capacity'
+                    nominatedCapacity:
+                      $ref: '#/components/schemas/Capacity'
+    ParticipantDashboardTransmissionRightsAndNominationsGraphData:
+      type: object
+      required:
+        - mtus
+      properties:
+        mtus:
+          type: array
+          items:
+            type: object
+            required:
+              - mtu
+              - values
+            properties:
+              mtu:
+                $ref: '#/components/schemas/MtuStart'
+              values:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - direction
+                    - allocatedTrs
+                    - firmNominatedCapacity
+                    - draftAndFirmNominatedCapacity
+                  properties:
+                    direction:
+                      $ref: '#/components/schemas/BorderDirection'
+                    allocatedTrs:
+                      $ref: '#/components/schemas/Capacity'
+                    firmNominatedCapacity:
+                      $ref: '#/components/schemas/Capacity'
+                    draftAndFirmNominatedCapacity:
+                      $ref: '#/components/schemas/Capacity'
+    ParticipantOrganisationDetails:
+      type: object
+      required:
+        - id
+        - status
+        - name
+        - authMethod
+        - contactInformation
+        - marketSettings
+        - fileSettings
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        status:
+          $ref: '#/components/schemas/OrganisationStatus'
+        name:
+          type: string
+        authMethod:
+          $ref: '#/components/schemas/OrganisationAuthMethod'
+        contactInformation:
+          $ref: '#/components/schemas/OrganisationContactInformation'
+        marketSettings:
+          $ref: '#/components/schemas/OrganisationMarketSettings'
+        fileSettings:
+          $ref: '#/components/schemas/OrganisationFileSettings'
+    ParticipantOverviewData:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - status
+        - organisationMembers
+        - contactInformation
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/OrganisationType'
+        status:
+          $ref: '#/components/schemas/OrganisationStatus'
+        organisationMembers:
+          type: object
+          required:
+            - registeredCount
+            - invitedCount
+          properties:
+            registeredCount:
+              $ref: '#/components/schemas/Count'
+            invitedCount:
+              $ref: '#/components/schemas/Count'
+        contactInformation:
+          type: object
+          required:
+            - primaryContact
+            - operationalEmergencyContact
+            - helpdeskPin
+          properties:
+            primaryContact:
+              $ref: '#/components/schemas/OrganisationContact'
+            operationalEmergencyContact:
+              $ref: '#/components/schemas/OrganisationContact'
+            helpdeskPin:
+              $ref: '#/components/schemas/OrganisationHelpdeskPin'
+    Permission:
+      type: string
+      enum:
+        - VIEW_CAPACITY_OVERVIEW
+        - VIEW_NTC_OVERVIEW
+        - VIEW_ATC_OVERVIEW
+        - MANAGE_NTC
+        - MANAGE_ATC
+        - VIEW_UNPLANNED_OUTAGES
+        - MANAGE_UNPLANNED_OUTAGES
+        - VIEW_PLANNED_OUTAGES
+        - MANAGE_PLANNED_OUTAGES
+        - VIEW_OWN_TRANSMISSION_RIGHTS
+        - VIEW_ANY_TRANSMISSION_RIGHTS
+        - VIEW_OWN_NOMINATIONS
+        - VIEW_ANY_NOMINATIONS
+        - MANAGE_OWN_NOMINATIONS
+        - MANAGE_ANY_NOMINATIONS
+        - VIEW_NOMINATION_GATES_OVERVIEW
+        - MANAGE_NOMINATION_CANCELLATION
+        - VIEW_CURTAILMENT
+        - MANAGE_CURTAILMENT
+        - VIEW_OWN_AGGREGATED_NOMINATIONS
+        - VIEW_ANY_AGGREGATED_NOMINATIONS
+        - VIEW_OWN_DEFAULT_NOMINATIONS
+        - MANAGE_OWN_DEFAULT_NOMINATIONS
+        - VIEW_ANY_DEFAULT_NOMINATIONS
+        - MANAGE_ANY_DEFAULT_NOMINATIONS
+        - VIEW_CRISIS
+        - MANAGE_CRISIS_ACTIONS
+        - MANAGE_CRISIS_MESSAGES
+        - MANAGE_ANY_ORGANISATIONS
+        - VIEW_OWN_ORGANISATIONS
+        - VIEW_ANY_ORGANISATIONS
+        - VIEW_OWN_USERS
+        - VIEW_ANY_USERS
+        - MANAGE_OWN_USERS
+        - MANAGE_ANY_USERS
+        - INVITE_OWN_USERS
+        - INVITE_ANY_USERS
+        - IMPERSONATE_USERS
+        - VIEW_ICO_DASHBOARD
+        - VIEW_PARTICIPANT_DASHBOARD
+        - VIEW_GENERAL_SYSTEM_MESSAGES
+        - VIEW_OPERATIONAL_SYSTEM_MESSAGES
+        - VIEW_PARTICIPANT_MESSAGES
+        - VIEW_BPP
+        - MANAGE_BPP
+        - VIEW_BUSINESS_PROCESSES
+        - MANAGE_BUSINESS_PROCESSES
+        - MANAGE_SENSITIVE_BUSINESS_PROCESSES
+        - VIEW_DATA_FLOWS
+        - MANAGE_DATA_FLOWS
+        - MANAGE_OWN_MANUAL_FILE_UPLOAD
+        - MANAGE_ANY_MANUAL_FILE_UPLOAD
+        - VIEW_OWN_AUDIT_LOGS
+        - VIEW_ANY_AUDIT_LOGS
+        - VIEW_BUSINESS_SETTINGS
+        - MANAGE_BUSINESS_SETTINGS
+        - VIEW_PROTECTED_CONFIG_VARIABLES
+        - VIEW_HELP_FAQ
+    PhoneNumber:
+      type: string
+      format: phone-number
+      pattern: ^\+\d{10,13}$
+    PlatformAppearance:
+      type: string
+      description: |
+        * `DEFAULT` mode means the UI should follow device's System Settings for switching between light mode and dark mode
+        * `LIGHT` or `DARK` mode sets the UI to the desired state regardless of System Settings
+      enum:
+        - DEFAULT
+        - LIGHT
+        - DARK
+    Profile:
+      type: object
+      required:
+        - user
+        - permissions
+        - appearance
+      properties:
+        user:
+          $ref: '#/components/schemas/ProfileUser'
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+        appearance:
+          $ref: '#/components/schemas/PlatformAppearance'
+        impersonatedBy:
+          $ref: '#/components/schemas/ProfileUser'
+    ProfileDetails:
+      type: object
+      required:
+        - id
+        - email
+        - organisation
+        - role
+        - name
+        - phoneNumber
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        email:
+          $ref: '#/components/schemas/Email'
+        organisation:
+          $ref: '#/components/schemas/ProfileUserOrganisation'
+        name:
+          type: string
+        phoneNumber:
+          $ref: '#/components/schemas/PhoneNumber'
+        jobTitle:
+          type: string
+    ProfileUser:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - role
+        - organisation
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+        email:
+          $ref: '#/components/schemas/Email'
+        role:
+          $ref: '#/components/schemas/UserRole'
+        organisation:
+          $ref: '#/components/schemas/ProfileUserOrganisation'
+    ProfileUserOrganisation:
+      type: object
+      required:
+        - id
+        - name
+        - authMethod
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+        authMethod:
+          $ref: '#/components/schemas/OrganisationAuthMethod'
+    PublicPlatformOverviewResponse:
+      type: object
+      required:
+        - mtuSize
+        - mtus
+      properties:
+        mtuSize:
+          $ref: '#/components/schemas/MtuSize'
+        mtus:
+          type: array
+          items:
+            type: object
+            required:
+              - mtu
+              - affectedByOutage
+              - values
+            properties:
+              mtu:
+                $ref: '#/components/schemas/MtuStart'
+              affectedByOutage:
+                type: boolean
+              values:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - direction
+                    - ntc
+                    - totalNominatedCapacity
+                    - scheduledCommercialExchanges
+                  properties:
+                    direction:
+                      $ref: '#/components/schemas/BorderDirection'
+                    ntc:
+                      $ref: '#/components/schemas/Capacity'
+                    totalNominatedCapacity:
+                      $ref: '#/components/schemas/Capacity'
+                    scheduledCommercialExchanges:
+                      $ref: '#/components/schemas/Capacity'
+                    physicalFlow:
+                      $ref: '#/components/schemas/Capacity'
+    ReportFile:
+      type: string
+      format: byte
+    SubmitNominationsMtu:
+      type: object
+      required:
+        - mtu
+      properties:
+        mtu:
+          $ref: '#/components/schemas/MtuStart'
+        value:
+          $ref: '#/components/schemas/Capacity'
+    SubmitTimescaleNominationsRequest:
+      type: object
+      required:
+        - mtus
+      properties:
+        mtus:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubmitNominationsMtu'
+    SystemMessageCategory:
+      type: string
+      enum:
+        - GENERAL
+        - OPERATIONAL
+    Timescale:
+      type: string
+      enum:
+        - LONG_TERM
+        - DAY_AHEAD
+        - INTRA_DAY
+    TimescaleLongTermOrDayAhead:
+      type: string
+      enum:
+        - LONG_TERM
+        - DAY_AHEAD
+    TimescaleNominationMtuStatus:
+      type: string
+      enum:
+        - EDITABLE
+        - LOCKED
+        - NO_TR
+        - CANCELLED
+    TimescaleNominationOptions:
+      type: object
+      required:
+        - windowStatus
+        - rightsInDirections
+      properties:
+        windowTiming:
+          type: object
+          required:
+            - openAt
+            - closeAt
+          properties:
+            openAt:
+              $ref: '#/components/schemas/DateTime'
+            closeAt:
+              $ref: '#/components/schemas/DateTime'
+        windowStatus:
+          $ref: '#/components/schemas/TimescaleNominationWindowStatus'
+        rightsInDirections:
+          $ref: '#/components/schemas/BorderDirectionWithBothAndNone'
+    TimescaleNominationStatus:
+      type: string
+      enum:
+        - PRE
+        - DRAFT
+        - FIRM
+    TimescaleNominationType:
+      type: string
+      enum:
+        - LONG_TERM_NOMINATION
+        - DAY_AHEAD_NOMINATION
+        - INTRA_DAY_NOMINATION
+    TimescaleNominationWindowStatus:
+      type: string
+      enum:
+        - NOT_YET_OPEN
+        - OPEN
+        - CLOSED
+        - CANCELLED
+    TimescaleNominations:
+      type: object
+      required:
+        - capacityResolution
+        - mtuSize
+        - mtus
+      properties:
+        capacityResolution:
+          $ref: '#/components/schemas/NominationCapacityResolution'
+        mtuSize:
+          $ref: '#/components/schemas/MtuSize'
+        mtus:
+          type: array
+          items:
+            type: object
+            description: |
+              * `mtuStatus`
+                - LOCKED => if either of the following cases are true for the MTU:
+                  - the MTU nomination window for the selected timescale is closed
+                  - the MTU was curtailed
+                  - every MTU is by definition LOCKED if
+                    - the specified Participant has `ableToNominate = FALSE` AND
+                    - does not have an `onBehalfParticipantId` specified
+                    - **in eihter markets**
+                - EDITABLE => if either of the following cases are true for the MTU:
+                  - MTU nom window for the selected timescale is either not yet open or currently open
+                  - There was no curtailment for the MTU
+                - NO_TR => if either of the following cases are true for the MTU:
+                  - the user has no TR for the specific MTU, therefore there is nothing to nominate
+                - CANCELLED => the MTU was part of a "Nomination Cancellation"
+              * `totalTrs` - Total value of Transmission Rights in kilowatts
+              * `currentNomination.value` - Current value of Nominations in kilowatts
+              * `notNominatedTrs` - Difference between total TRs and currentNomination.value
+              * `reinstated` - Boolean flag indicating if the MTU was reinstated
+            required:
+              - mtu
+              - mtuStatus
+              - totalTrs
+              - notNominatedTrs
+              - reinstated
+            properties:
+              mtu:
+                $ref: '#/components/schemas/MtuStart'
+              mtuStatus:
+                $ref: '#/components/schemas/TimescaleNominationMtuStatus'
+              totalTrs:
+                $ref: '#/components/schemas/Capacity'
+              currentNomination:
+                type: object
+                description: |
+                  Optional field for storing Nomination status and value (if any nomination has been made already)
+                required:
+                  - status
+                  - value
+                properties:
+                  status:
+                    $ref: '#/components/schemas/TimescaleNominationStatus'
+                  value:
+                    $ref: '#/components/schemas/Capacity'
+              notNominatedTrs:
+                $ref: '#/components/schemas/Capacity'
+              reinstated:
+                type: boolean
+    TransmissionRightsOverview:
+      type: object
+      required:
+        - mtuSize
+        - mtus
+      properties:
+        mtuSize:
+          $ref: '#/components/schemas/MtuSize'
+        mtus:
+          type: array
+          items:
+            type: object
+            required:
+              - mtu
+              - values
+            properties:
+              mtu:
+                $ref: '#/components/schemas/MtuStart'
+              values:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - direction
+                    - timescales
+                  properties:
+                    direction:
+                      $ref: '#/components/schemas/BorderDirection'
+                    timescales:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                          - timescale
+                        properties:
+                          timescale:
+                            $ref: '#/components/schemas/Timescale'
+                          value:
+                            $ref: '#/components/schemas/Capacity'
+                    total:
+                      $ref: '#/components/schemas/Capacity'
+    UnreadMessagesResponse:
+      type: object
+      required:
+        - count
+      properties:
+        count:
+          $ref: '#/components/schemas/Count'
+    UpdateDefaultNominationRequest:
+      type: object
+      required:
+        - deliveryPeriodStart
+        - mtus
+      properties:
+        deliveryPeriodStart:
+          $ref: '#/components/schemas/Date'
+        deliveryPeriodEnd:
+          $ref: '#/components/schemas/Date'
+        mtus:
+          type: array
+          items:
+            $ref: '#/components/schemas/DefaultNominationMtu'
+    UpdateProfileDetailsRequest:
+      type: object
+      required:
+        - name
+        - phoneNumber
+      properties:
+        name:
+          type: string
+        phoneNumber:
+          $ref: '#/components/schemas/PhoneNumber'
+        jobTitle:
+          type: string
+    UpdateUserRequest:
+      type: object
+      required:
+        - name
+        - phoneNumber
+        - role
+      properties:
+        name:
+          type: string
+        phoneNumber:
+          $ref: '#/components/schemas/PhoneNumber'
+        role:
+          $ref: '#/components/schemas/UserRole'
+        jobTitle:
+          type: string
+    User:
+      type: object
+      required:
+        - id
+        - organisation
+        - name
+        - email
+        - phoneNumber
+        - role
+        - status
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        organisation:
+          $ref: '#/components/schemas/UserOrganisation'
+        name:
+          type: string
+        email:
+          $ref: '#/components/schemas/Email'
+        phoneNumber:
+          $ref: '#/components/schemas/PhoneNumber'
+        role:
+          $ref: '#/components/schemas/UserRole'
+        status:
+          $ref: '#/components/schemas/UserStatus'
+        jobTitle:
+          type: string
+    UserOrganisation:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+    UserPreferences:
+      type: object
+      required:
+        - generalNotifications
+        - appearance
+      properties:
+        generalNotifications:
+          type: object
+          required:
+            - criticalAlert
+            - critical
+            - major
+            - normal
+          properties:
+            criticalAlert:
+              $ref: '#/components/schemas/NotificationPreferenceWithSms'
+            critical:
+              $ref: '#/components/schemas/NotificationPreference'
+            major:
+              $ref: '#/components/schemas/NotificationPreference'
+            normal:
+              $ref: '#/components/schemas/NotificationPreference'
+        appearance:
+          $ref: '#/components/schemas/PlatformAppearance'
+    UserRole:
+      type: string
+      enum:
+        - ICO_ADMIN
+        - ICO_CURTAILMENT_MANAGER
+        - ICO_VIEW
+        - PART_ADMIN
+        - PART_NOMINATOR
+        - PART_VIEW
+    UserStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - INVITED
+        - SUSPENDED
+    Version:
+      type: object
+      required:
+        - version
+        - apiVersion
+      properties:
+        version:
+          type: string
+        apiVersion:
+          type: string
+    ZendeskChatTokenResponse:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+  responses:
+    Unauthorized:
+      description: |-
+        __Unauthorized__
+
+        *  `UNAUTHORIZED` - invalid authentication token
+      x-errors:
+        - code: UNAUTHORIZED
+          description: invalid authentication token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: |-
+        __Forbidden__
+
+        *  `FORBIDDEN` - insufficient permissions or authorization failed
+      x-errors:
+        - code: FORBIDDEN
+          description: insufficient permissions or authorization failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: |-
+        __Not Found__
+
+        *  `NOT_FOUND` - entity cannot be found
+      x-errors:
+        - code: NOT_FOUND
+          description: entity cannot be found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NoContent:
+      description: __No Content__
+  parameters:
+    ReceivePeriodStartOptional:
+      in: query
+      name: receivePeriodStart
+      schema:
+        $ref: '#/components/schemas/DateTime'
+    ReceivePeriodEndOptional:
+      in: query
+      name: receivePeriodEnd
+      schema:
+        $ref: '#/components/schemas/DateTime'
+    TimescaleNominationType:
+      in: query
+      name: type
+      required: true
+      schema:
+        $ref: '#/components/schemas/TimescaleNominationType'
+    PageLimit:
+      in: query
+      name: limit
+      required: true
+      description: Number of records to return on a page
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+    PageOffsetOptional:
+      in: query
+      name: offset
+      description: Offset in the list of records to return
+      schema:
+        type: integer
+        minimum: 0
+    IdOffsetOptional:
+      in: query
+      name: idOffset
+      description: Offset by ID in the list of records to return
+      schema:
+        $ref: '#/components/schemas/Identifier'
+    OrganisationIdOptional:
+      in: header
+      name: X-Organisation-Id
+      description: Internal ID of an Organisation (optional)
+      schema:
+        $ref: '#/components/schemas/Identifier'
+    Identifier:
+      in: path
+      name: id
+      required: true
+      description: Internal unique ID of an entity
+      schema:
+        $ref: '#/components/schemas/Identifier'
+    ParticipantId:
+      in: header
+      name: X-Participant-Id
+      required: true
+      description: Internal ID of a Participant-type Organisation
+      schema:
+        $ref: '#/components/schemas/Identifier'
+    ParticipantIds:
+      in: header
+      name: X-Participant-Ids
+      required: true
+      description: List of internal IDs of Participant-type Organisations
+      schema:
+        type: array
+        items:
+          $ref: '#/components/schemas/Identifier'
+    PageOffset:
+      in: query
+      name: offset
+      required: true
+      description: Offset in the list of records to return
+      schema:
+        type: integer
+        minimum: 0
+    DeliveryPeriodStart:
+      in: query
+      name: deliveryPeriodStart
+      required: true
+      description: Start of a Delivery Day range, inclusive
+      schema:
+        $ref: '#/components/schemas/Date'
+    DeliveryPeriodEnd:
+      in: query
+      name: deliveryPeriodEnd
+      required: true
+      description: End of a Delivery Day range, inclusive
+      schema:
+        $ref: '#/components/schemas/Date'
+    DeliveryDay:
+      in: query
+      name: deliveryDay
+      required: true
+      description: Delivery Day
+      schema:
+        $ref: '#/components/schemas/Date'
+    MtuSize:
+      in: query
+      name: mtuSize
+      required: true
+      description: MTU Size definition
+      schema:
+        $ref: '#/components/schemas/MtuSize'
+    Timescale:
+      in: query
+      name: timescale
+      required: true
+      description: Timescale
+      schema:
+        $ref: '#/components/schemas/Timescale'
+    BorderDirection:
+      in: query
+      name: borderDirection
+      required: true
+      description: Border Direction
+      schema:
+        $ref: '#/components/schemas/BorderDirection'
+    Timescales:
+      in: query
+      name: timescales
+      required: true
+      description: List of Timescales
+      schema:
+        type: array
+        items:
+          $ref: '#/components/schemas/Timescale'
+    BorderDirectionWithBoth:
+      in: query
+      name: borderDirection
+      required: true
+      description: Border Direction with additional 'BOTH' option
+      schema:
+        $ref: '#/components/schemas/BorderDirectionWithBoth'
+    OrganisationIds:
+      in: header
+      name: X-Organisation-Ids
+      required: true
+      description: List of internal IDs of Organisations
+      schema:
+        type: array
+        items:
+          $ref: '#/components/schemas/Identifier'
+    OrganisationId:
+      in: header
+      name: X-Organisation-Id
+      required: true
+      description: Internal ID of an Organisation
+      schema:
+        $ref: '#/components/schemas/Identifier'
+  examples: {}
+  requestBodies: {}
+  headers: {}
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    AuthToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  links: {}
+  callbacks: {}
