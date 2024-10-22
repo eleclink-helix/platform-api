@@ -1,0 +1,14 @@
+{
+  "environments": [
+    {
+      "name": "PRODUCTION",
+      "baseUrl": "https://api.helix.eleclink.co.uk",
+      "default": true
+    },
+    {
+      "name": "TRAINING",
+      "baseUrl": "https://api.training.helix.eleclink.co.uk"
+    }
+  ],
+  "labels": {}
+}
