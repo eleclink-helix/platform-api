@@ -1,3 +1,7 @@
+### [0.0.115](https://github.com/eleclink-helix/platform-api/compare/v0.0.114...v0.0.115) (2024-10-25)
+
+> No changes affecting Participants.
+
 ### [0.0.114](https://github.com/eleclink-helix/platform-api/compare/v0.0.113...v0.0.114) (2024-10-25)
 
 > No changes affecting Participants.
