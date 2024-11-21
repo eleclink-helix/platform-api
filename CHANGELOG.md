@@ -1,3 +1,10 @@
+### [0.0.118](https://github.com/eleclink-helix/platform-api/compare/v0.0.117...v0.0.118) (2024-11-21)
+
+
+### Bug Fixes
+
+* **organisation:** modify bmu demand and generation code length validations
+
 ### [0.0.117](https://github.com/eleclink-helix/platform-api/compare/v0.0.116...v0.0.117) (2024-11-04)
 
 > No changes affecting Participants.
