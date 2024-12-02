@@ -7,7 +7,7 @@ info:
     ---
 
     Additional documentation available in the API's [GitHub repository](https://github.com/eleclink-helix/platform-api)
-  version: 0.0.118
+  version: 0.0.119
   contact:
     name: ElecLink
     url: https://www.eleclink.co.uk
@@ -3942,6 +3942,8 @@ components:
           $ref: '#/components/schemas/LocalMtuPeriod'
         status:
           $ref: '#/components/schemas/NominationGateStatus'
+        nextActionAt:
+          $ref: '#/components/schemas/DateTime'
     IntraDayProductType:
       type: string
       enum:
@@ -4012,6 +4014,8 @@ components:
           $ref: '#/components/schemas/TimescaleLongTermOrDayAhead'
         status:
           $ref: '#/components/schemas/NominationGateStatus'
+        nextActionAt:
+          $ref: '#/components/schemas/DateTime'
     ManualFileUploadRequest:
       type: object
       required:
@@ -4197,34 +4201,13 @@ components:
         - intraDay
       properties:
         longTerm:
-          type: object
-          required:
-            - gate
-          properties:
-            gate:
-              $ref: '#/components/schemas/LongTermOrDayAheadNominationGate'
-            nextActionAt:
-              $ref: '#/components/schemas/DateTime'
+          $ref: '#/components/schemas/LongTermOrDayAheadNominationGate'
         dayAhead:
-          type: object
-          required:
-            - gate
-          properties:
-            gate:
-              $ref: '#/components/schemas/LongTermOrDayAheadNominationGate'
-            nextActionAt:
-              $ref: '#/components/schemas/DateTime'
+          $ref: '#/components/schemas/LongTermOrDayAheadNominationGate'
         intraDay:
           type: array
           items:
-            type: object
-            required:
-              - gate
-            properties:
-              gate:
-                $ref: '#/components/schemas/IntraDayNominationGate'
-              nextActionAt:
-                $ref: '#/components/schemas/DateTime'
+            $ref: '#/components/schemas/IntraDayNominationGate'
     NotificationPreference:
       type: object
       required:

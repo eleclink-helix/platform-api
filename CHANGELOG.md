@@ -1,3 +1,10 @@
+### [0.0.119](https://github.com/eleclink-helix/platform-api/compare/v0.0.118...v0.0.119) (2024-12-02)
+
+
+### Features
+
+* **nomination-gates:** add nextActionAt to every nomination gate object
+
 ### [0.0.118](https://github.com/eleclink-helix/platform-api/compare/v0.0.117...v0.0.118) (2024-11-21)
 
 
