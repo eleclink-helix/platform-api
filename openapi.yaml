@@ -7,7 +7,7 @@ info:
     ---
 
     Additional documentation available in the API's [GitHub repository](https://github.com/eleclink-helix/platform-api)
-  version: 0.0.119
+  version: 0.0.120
   contact:
     name: ElecLink
     url: https://www.eleclink.co.uk
@@ -4447,6 +4447,7 @@ components:
       type: object
       required:
         - mtus
+        - mtuSize
       properties:
         mtus:
           type: array
@@ -4481,6 +4482,8 @@ components:
                     $ref: '#/components/schemas/BorderDirection'
                   flow:
                     $ref: '#/components/schemas/Capacity'
+        mtuSize:
+          $ref: '#/components/schemas/MtuSize'
     ParticipantDashboardMessages:
       type: object
       required:
@@ -4613,6 +4616,7 @@ components:
       type: object
       required:
         - mtus
+        - mtuSize
       properties:
         mtus:
           type: array
@@ -4642,6 +4646,8 @@ components:
                       $ref: '#/components/schemas/Capacity'
                     draftAndFirmNominatedCapacity:
                       $ref: '#/components/schemas/Capacity'
+        mtuSize:
+          $ref: '#/components/schemas/MtuSize'
     ParticipantOrganisationDetails:
       type: object
       required:

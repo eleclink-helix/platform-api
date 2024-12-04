@@ -1,3 +1,10 @@
+### [0.0.120](https://github.com/eleclink-helix/platform-api/compare/v0.0.119...v0.0.120) (2024-12-04)
+
+
+### Features
+
+* **ico-dashboard,participant-dashboard:** add mtuSize to dashboards
+
 ### [0.0.119](https://github.com/eleclink-helix/platform-api/compare/v0.0.118...v0.0.119) (2024-12-02)
 
 
