@@ -7,7 +7,7 @@ info:
     ---
 
     Additional documentation available in the API's [GitHub repository](https://github.com/eleclink-helix/platform-api)
-  version: 0.0.120
+  version: 0.0.121
   contact:
     name: ElecLink
     url: https://www.eleclink.co.uk
@@ -3892,11 +3892,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/NestedError'
-        params:
-          additionalProperties:
-            type: string
-        requestId:
-          type: string
         debugError:
           type: string
     FileName:

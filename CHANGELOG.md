@@ -1,3 +1,15 @@
+### [0.0.121](https://github.com/eleclink-helix/platform-api/compare/v0.0.120...v0.0.121) (2024-12-09)
+
+
+### Features
+
+* remove params and requestId from ErrorResponse
+
+
+### Build
+
+* **deps:** update oasg to v14.1.0
+
 ### [0.0.120](https://github.com/eleclink-helix/platform-api/compare/v0.0.119...v0.0.120) (2024-12-04)
 
 
