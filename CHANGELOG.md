@@ -1,3 +1,10 @@
+### [0.0.122](https://github.com/eleclink-helix/platform-api/compare/v0.0.121...v0.0.122) (2024-12-09)
+
+
+### Features
+
+* add traceId to ErrorResponse
+
 ### [0.0.121](https://github.com/eleclink-helix/platform-api/compare/v0.0.120...v0.0.121) (2024-12-09)
 
 
