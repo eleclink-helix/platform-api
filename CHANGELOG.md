@@ -1,3 +1,10 @@
+### [0.0.124](https://github.com/eleclink-helix/platform-api/compare/v0.0.123...v0.0.124) (2024-12-11)
+
+
+### Bug Fixes
+
+* **nomination-gates:** intra-day nomination gates with date time and mtu size
+
 ### [0.0.123](https://github.com/eleclink-helix/platform-api/compare/v0.0.122...v0.0.123) (2024-12-10)
 
 > No changes affecting Participants.

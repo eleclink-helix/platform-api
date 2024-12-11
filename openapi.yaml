@@ -7,7 +7,7 @@ info:
     ---
 
     Additional documentation available in the API's [GitHub repository](https://github.com/eleclink-helix/platform-api)
-  version: 0.0.123
+  version: 0.0.124
   contact:
     name: ElecLink
     url: https://www.eleclink.co.uk
@@ -3924,7 +3924,7 @@ components:
         - productType
         - name
         - deliveryDay
-        - mtuPeriod
+        - mtu
         - status
       properties:
         id:
@@ -3935,12 +3935,24 @@ components:
           type: string
         deliveryDay:
           $ref: '#/components/schemas/Date'
-        mtuPeriod:
-          $ref: '#/components/schemas/LocalMtuPeriod'
+        mtu:
+          $ref: '#/components/schemas/MtuStart'
         status:
           $ref: '#/components/schemas/NominationGateStatus'
         nextActionAt:
           $ref: '#/components/schemas/DateTime'
+    IntraDayNominationGates:
+      type: object
+      required:
+        - nominationGates
+        - mtuSize
+      properties:
+        nominationGates:
+          type: array
+          items:
+            $ref: '#/components/schemas/IntraDayNominationGate'
+        mtuSize:
+          $ref: '#/components/schemas/MtuSize'
     IntraDayProductType:
       type: string
       enum:
@@ -3964,30 +3976,6 @@ components:
       properties:
         id:
           $ref: '#/components/schemas/Identifier'
-    LocalMtuEnd:
-      type: string
-      description: |
-        The last moment (exclusive) of an MTU period in local time, minute resolution, interpreted in **System Time**
-
-        - string, interpreted in `hh:mm` format
-        - only `XX:00`, `XX:15`, `XX:30` and `XX:45` are valid values (depending on MTU size)
-      format: string
-      example: '18:00'
-      pattern: ^(0[0-9]|1[0-9]|2[0-3]):(00|15|30|45)$
-    LocalMtuPeriod:
-      description: |
-        Period of MTUs in local time aligned to MTU borders in a natural way, meaning:
-
-        * with 60 min MTUs if start is 10:00 and end is 11:00 => it means a single MTU between 10:00 and 11:00
-        * with 30 min MTUs if start is 10:00 and end is 11:00 => it means the two MTUs between 10:00-10:30 and 10:30-11:00
-      required:
-        - fromMtuStart
-        - toMtuEnd
-      properties:
-        fromMtuStart:
-          $ref: '#/components/schemas/LocalMtuStart'
-        toMtuEnd:
-          $ref: '#/components/schemas/LocalMtuEnd'
     LocalMtuStart:
       type: string
       description: |
@@ -4202,9 +4190,7 @@ components:
         dayAhead:
           $ref: '#/components/schemas/LongTermOrDayAheadNominationGate'
         intraDay:
-          type: array
-          items:
-            $ref: '#/components/schemas/IntraDayNominationGate'
+          $ref: '#/components/schemas/IntraDayNominationGates'
     NotificationPreference:
       type: object
       required:
