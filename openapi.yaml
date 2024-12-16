@@ -7,7 +7,7 @@ info:
     ---
 
     Additional documentation available in the API's [GitHub repository](https://github.com/eleclink-helix/platform-api)
-  version: 0.0.125
+  version: 0.0.126
   contact:
     name: ElecLink
     url: https://www.eleclink.co.uk
@@ -3898,7 +3898,6 @@ components:
           type: string
     FileName:
       type: string
-      pattern: ^[a-zA-Z0-9._-]+$
     Identifier:
       type: string
       description: Unique identifier for the record in UUID4 format

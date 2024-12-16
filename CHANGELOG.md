@@ -1,3 +1,10 @@
+### [0.0.126](https://github.com/eleclink-helix/platform-api/compare/v0.0.125...v0.0.126) (2024-12-16)
+
+
+### Bug Fixes
+
+* **attachments:** file name without pattern validation
+
 ### [0.0.125](https://github.com/eleclink-helix/platform-api/compare/v0.0.124...v0.0.125) (2024-12-12)
 
 > No changes affecting Participants.
