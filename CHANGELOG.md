@@ -1,3 +1,10 @@
+### [0.0.127](https://github.com/eleclink-helix/platform-api/compare/v0.0.126...v0.0.127) (2024-12-18)
+
+
+### Features
+
+* **platform-api:** add new error code for end unplanned outage api
+
 ### [0.0.126](https://github.com/eleclink-helix/platform-api/compare/v0.0.125...v0.0.126) (2024-12-16)
 
 

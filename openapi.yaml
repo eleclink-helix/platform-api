@@ -7,7 +7,7 @@ info:
     ---
 
     Additional documentation available in the API's [GitHub repository](https://github.com/eleclink-helix/platform-api)
-  version: 0.0.126
+  version: 0.0.127
   contact:
     name: ElecLink
     url: https://www.eleclink.co.uk
@@ -3831,6 +3831,7 @@ components:
         - ORGANISATION_CANNOT_BE_LOCKED
         - ORGANISATION_NAME_MUST_BE_UNIQUE
         - ORGANISATION_TYPE_MISMATCH
+        - OUTAGE_NOT_EXPIRED
         - OUTAGE_PERIOD_CANNOT_BE_REMOVED
         - OUTAGE_PERIOD_TOO_SHORT
         - OUTAGE_PERIODS_CROSS_OVER_YEAR
