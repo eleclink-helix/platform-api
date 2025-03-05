@@ -1,3 +1,10 @@
+### [0.0.130](https://github.com/eleclink-helix/platform-api/compare/v0.0.129...v0.0.130) (2025-03-05)
+
+
+### Bug Fixes
+
+* allow phone numbers to be at most 20 digits long after plus sign
+
 ### [0.0.129](https://github.com/eleclink-helix/platform-api/compare/v0.0.128...v0.0.129) (2025-03-05)
 
 
