@@ -7,7 +7,7 @@ info:
     ---
 
     Additional documentation available in the API's [GitHub repository](https://github.com/eleclink-helix/platform-api)
-  version: 0.0.128
+  version: 0.0.129
   contact:
     name: ElecLink
     url: https://www.eleclink.co.uk
@@ -110,7 +110,6 @@ paths:
         - attachment
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - MANAGE_CRISIS_ACTIONS
         - INVITE_OWN_USERS
@@ -175,7 +174,6 @@ paths:
         - audit-log
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_OWN_AUDIT_LOGS
         - VIEW_ANY_AUDIT_LOGS
@@ -263,7 +261,6 @@ paths:
         - audit-log
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_OWN_AUDIT_LOGS
         - VIEW_ANY_AUDIT_LOGS
@@ -299,7 +296,6 @@ paths:
         - default-nomination
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_OWN_DEFAULT_NOMINATIONS
         - VIEW_ANY_DEFAULT_NOMINATIONS
@@ -329,7 +325,6 @@ paths:
         - default-nomination
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_OWN_DEFAULT_NOMINATIONS
         - VIEW_ANY_DEFAULT_NOMINATIONS
@@ -389,7 +384,6 @@ paths:
         - default-nomination
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - MANAGE_OWN_DEFAULT_NOMINATIONS
         - MANAGE_ANY_DEFAULT_NOMINATIONS
@@ -457,7 +451,6 @@ paths:
         - default-nomination
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_OWN_DEFAULT_NOMINATIONS
         - VIEW_ANY_DEFAULT_NOMINATIONS
@@ -492,7 +485,6 @@ paths:
         - default-nomination
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - MANAGE_OWN_DEFAULT_NOMINATIONS
         - MANAGE_ANY_DEFAULT_NOMINATIONS
@@ -561,7 +553,6 @@ paths:
         - default-nomination
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - MANAGE_OWN_DEFAULT_NOMINATIONS
         - MANAGE_ANY_DEFAULT_NOMINATIONS
@@ -608,7 +599,6 @@ paths:
         - manual-file-upload
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - MANAGE_ANY_MANUAL_FILE_UPLOAD
         - MANAGE_OWN_MANUAL_FILE_UPLOAD
@@ -677,7 +667,6 @@ paths:
         - messages
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_GENERAL_SYSTEM_MESSAGES
         - VIEW_OPERATIONAL_SYSTEM_MESSAGES
@@ -763,7 +752,6 @@ paths:
         - messages
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_PARTICIPANT_MESSAGES
       parameters:
@@ -855,7 +843,6 @@ paths:
         - messages
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_PARTICIPANT_MESSAGES
       responses:
@@ -895,7 +882,6 @@ paths:
         - nomination-gate
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_NOMINATION_GATES_OVERVIEW
       parameters:
@@ -930,7 +916,6 @@ paths:
         - nomination
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_OWN_NOMINATIONS
         - VIEW_ANY_NOMINATIONS
@@ -982,7 +967,6 @@ paths:
         - nomination
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_OWN_NOMINATIONS
         - VIEW_ANY_NOMINATIONS
@@ -1034,7 +1018,6 @@ paths:
         - nomination
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - MANAGE_OWN_NOMINATIONS
         - MANAGE_ANY_NOMINATIONS
@@ -1119,7 +1102,6 @@ paths:
         - nomination
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_OWN_AGGREGATED_NOMINATIONS
       responses:
@@ -1162,7 +1144,6 @@ paths:
         - nomination
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_OWN_AGGREGATED_NOMINATIONS
         - VIEW_ANY_AGGREGATED_NOMINATIONS
@@ -1198,7 +1179,6 @@ paths:
         - nomination
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_OWN_AGGREGATED_NOMINATIONS
         - VIEW_ANY_AGGREGATED_NOMINATIONS
@@ -1244,7 +1224,6 @@ paths:
         - organisation
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_ANY_ORGANISATIONS
         - VIEW_OWN_ORGANISATIONS
@@ -1278,7 +1257,6 @@ paths:
         - organisation
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_ANY_ORGANISATIONS
         - VIEW_OWN_ORGANISATIONS
@@ -1318,7 +1296,6 @@ paths:
         - organisation
       security:
         - ApiKey: []
-        - AuthToken: []
       responses:
         '200':
           description: __OK__
@@ -1346,7 +1323,6 @@ paths:
         - participant-dashboard
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_OWN_NOMINATIONS
       responses:
@@ -1388,7 +1364,6 @@ paths:
         - participant-dashboard
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - MANAGE_OWN_NOMINATIONS
       x-audit-log: SUBMIT_PARTICIPANT_DASHBOARD_NOMINATIONS
@@ -1437,7 +1412,6 @@ paths:
         - participant-dashboard
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_PARTICIPANT_DASHBOARD
       responses:
@@ -1477,7 +1451,6 @@ paths:
         - participant-dashboard
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_PARTICIPANT_DASHBOARD
       parameters:
@@ -1535,7 +1508,6 @@ paths:
         - participant-dashboard
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_PARTICIPANT_DASHBOARD
       parameters:
@@ -1577,7 +1549,6 @@ paths:
         - participant-dashboard
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_PARTICIPANT_DASHBOARD
       parameters:
@@ -1636,7 +1607,6 @@ paths:
         - participant-dashboard
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_PARTICIPANT_DASHBOARD
       parameters:
@@ -1679,7 +1649,6 @@ paths:
         - participant-dashboard
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_PARTICIPANT_DASHBOARD
       parameters:
@@ -1721,7 +1690,6 @@ paths:
         - participant-dashboard
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_PARTICIPANT_DASHBOARD
       responses:
@@ -1761,7 +1729,6 @@ paths:
         - participant-dashboard
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_PARTICIPANT_DASHBOARD
       responses:
@@ -1802,7 +1769,6 @@ paths:
         - participant-overview
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_ANY_ORGANISATIONS
         - VIEW_OWN_ORGANISATIONS
@@ -1840,7 +1806,6 @@ paths:
         - profile
       security:
         - ApiKey: []
-        - AuthToken: []
       responses:
         '200':
           description: __OK__
@@ -1859,7 +1824,6 @@ paths:
         - profile
       security:
         - ApiKey: []
-        - AuthToken: []
       responses:
         '200':
           description: __OK__
@@ -1881,7 +1845,6 @@ paths:
         - profile
       security:
         - ApiKey: []
-        - AuthToken: []
       x-audit-log: UPDATE_PROFILE_DETAILS
       requestBody:
         required: true
@@ -1911,7 +1874,6 @@ paths:
         - profile
       security:
         - ApiKey: []
-        - AuthToken: []
       responses:
         '200':
           description: __OK__
@@ -1933,7 +1895,6 @@ paths:
         - profile
       security:
         - ApiKey: []
-        - AuthToken: []
       x-audit-log: UPDATE_PREFERENCES
       requestBody:
         required: true
@@ -1944,117 +1905,6 @@ paths:
       responses:
         '204':
           $ref: '#/components/responses/NoContent'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-  /v1/profile/api-keys:
-    get:
-      operationId: getApiKeys
-      description: |
-        Fetch API Keys for the currently authenticated User
-      tags:
-        - profile
-      security:
-        - ApiKey: []
-        - AuthToken: []
-      responses:
-        '200':
-          description: __OK__
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ApiKey'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-    post:
-      operationId: createApiKey
-      description: |-
-        Create a new API Key for the currently authenticated User
-
-        The key value itself will be only presented once in the response
-
-        ---
-
-        __Generates Audit Log Entry:__ `CREATE_API_KEY`
-      tags:
-        - profile
-      security:
-        - ApiKey: []
-        - AuthToken: []
-      x-audit-log: CREATE_API_KEY
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateApiKeyRequest'
-      responses:
-        '201':
-          description: __Created__
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CreatedApiKey'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '422':
-          description: |-
-            __Unprocessable Entity__
-
-            *  `API_KEY_NAME_NOT_UNIQUE` - the name of the API Key has to be unique among the User's API Keys
-          x-errors:
-            - code: API_KEY_NAME_NOT_UNIQUE
-              description: the name of the API Key has to be unique among the User's API Keys
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /v1/profile/api-keys/{id}:
-    delete:
-      operationId: deleteApiKey
-      description: |-
-        Delete an API Key by its identifier for the currently authenticated User
-
-        ---
-
-        __Generates Audit Log Entry:__ `DELETE_API_KEY`
-      tags:
-        - profile
-      security:
-        - ApiKey: []
-        - AuthToken: []
-      x-audit-log: DELETE_API_KEY
-      parameters:
-        - $ref: '#/components/parameters/Identifier'
-      responses:
-        '204':
-          $ref: '#/components/responses/NoContent'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-  /v1/profile/zendesk-chat-token:
-    get:
-      operationId: getZendeskChatToken
-      description: |
-        Fetch a signed JWT for Zendesk Chat which encapsulates the authenticated User's identity
-
-        Used to authenticate the Zendesk Chat Web Widget so the user could see their message history
-      tags:
-        - profile
-      security:
-        - ApiKey: []
-        - AuthToken: []
-      responses:
-        '200':
-          description: __OK__
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ZendeskChatTokenResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
   /v1/public/platform-overview:
@@ -2091,7 +1941,6 @@ paths:
         - reporting
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_OWN_TRANSMISSION_RIGHTS
         - VIEW_ANY_TRANSMISSION_RIGHTS
@@ -2155,7 +2004,6 @@ paths:
         - reporting
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_OWN_NOMINATIONS
         - VIEW_ANY_NOMINATIONS
@@ -2220,7 +2068,6 @@ paths:
         - reporting
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_OWN_NOMINATIONS
         - VIEW_ANY_NOMINATIONS
@@ -2290,7 +2137,6 @@ paths:
         - reporting
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_OWN_USERS
         - VIEW_ANY_USERS
@@ -2346,7 +2192,6 @@ paths:
         - reporting
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_OWN_AUDIT_LOGS
         - VIEW_ANY_AUDIT_LOGS
@@ -2421,7 +2266,6 @@ paths:
         - transmission-right
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_OWN_TRANSMISSION_RIGHTS
         - VIEW_ANY_TRANSMISSION_RIGHTS
@@ -2481,7 +2325,6 @@ paths:
         - user
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_OWN_USERS
         - VIEW_ANY_USERS
@@ -2531,7 +2374,6 @@ paths:
         - user
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - VIEW_OWN_USERS
         - VIEW_ANY_USERS
@@ -2578,7 +2420,6 @@ paths:
         - user
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - MANAGE_OWN_USERS
         - MANAGE_ANY_USERS
@@ -2635,7 +2476,6 @@ paths:
         - user
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - INVITE_OWN_USERS
         - INVITE_ANY_USERS
@@ -2713,7 +2553,6 @@ paths:
         - user
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - INVITE_OWN_USERS
         - INVITE_ANY_USERS
@@ -2795,7 +2634,6 @@ paths:
         - user
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - MANAGE_OWN_USERS
         - MANAGE_ANY_USERS
@@ -2843,7 +2681,6 @@ paths:
         - user
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - MANAGE_OWN_USERS
         - MANAGE_ANY_USERS
@@ -2896,7 +2733,6 @@ paths:
         - user
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - MANAGE_OWN_USERS
         - MANAGE_ANY_USERS
@@ -2944,7 +2780,6 @@ paths:
         - user
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - MANAGE_OWN_USERS
         - MANAGE_ANY_USERS
@@ -2992,7 +2827,6 @@ paths:
         - user
       security:
         - ApiKey: []
-        - AuthToken: []
       x-permissions:
         - MANAGE_OWN_USERS
         - MANAGE_ANY_USERS
@@ -3126,19 +2960,6 @@ components:
           $ref: '#/components/schemas/BorderDirection'
         preNominationsExists:
           type: boolean
-    ApiKey:
-      type: object
-      required:
-        - id
-        - name
-        - createdAt
-      properties:
-        id:
-          $ref: '#/components/schemas/Identifier'
-        name:
-          type: string
-        createdAt:
-          $ref: '#/components/schemas/DateTime'
     Attachment:
       type: object
       description: |
@@ -3496,13 +3317,6 @@ components:
       description: Natural numbers {0, 1, 2, 3, ...} used for counting elements
       format: int64
       minimum: 0
-    CreateApiKeyRequest:
-      type: object
-      required:
-        - name
-      properties:
-        name:
-          type: string
     CreateDefaultNominationRequest:
       type: object
       required:
@@ -3523,19 +3337,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DefaultNominationMtu'
-    CreatedApiKey:
-      type: object
-      required:
-        - id
-        - name
-        - token
-      properties:
-        id:
-          $ref: '#/components/schemas/Identifier'
-        name:
-          type: string
-        token:
-          type: string
     CreatedDefaultNomination:
       type: object
       required:
@@ -5204,13 +5005,6 @@ components:
           type: string
         apiVersion:
           type: string
-    ZendeskChatTokenResponse:
-      type: object
-      required:
-        - token
-      properties:
-        token:
-          type: string
   responses:
     Unauthorized:
       description: |-
@@ -5408,9 +5202,5 @@ components:
       type: apiKey
       in: header
       name: X-API-Key
-    AuthToken:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
   links: {}
   callbacks: {}

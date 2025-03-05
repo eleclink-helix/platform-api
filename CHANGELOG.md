@@ -1,3 +1,17 @@
+### [0.0.129](https://github.com/eleclink-helix/platform-api/compare/v0.0.128...v0.0.129) (2025-03-05)
+
+
+### Bug Fixes
+
+* unpublish operations not available with ApiKey auth
+
+
+### Build
+
+* remove private security schemes
+* simplify decorators
+* update swagger-ui version to 5.20.0
+
 ### [0.0.128](https://github.com/eleclink-helix/platform-api/compare/v0.0.127...v0.0.128) (2025-02-07)
 
 > No changes affecting Participants.
