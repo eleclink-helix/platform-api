@@ -127,7 +127,7 @@ As highlighted in the JSON response, the _Participant ID_ is the value in the `u
 
 The _Partcipant ID_ can be treated as a **constant** in your integrations, it won't ever change in **Helix**.
 
-> 💡 To ease the testing process **_Participant IDs_ are kept in sync between [environments](#-environments)**, which is generally **NOT** true for other IDs (e.g. User IDs, Default Nomination IDs, etc), those are all unique and different on each environment.
+> ⚠️ Please note, as with any ID in system the (e.g. User IDs, Auction IDs, etc) _Participant IDs_ are **NOT necessarily the same** across different [environments](#-environments), so make sure you always use the appropriate ID in your requests.
 
 ### 👥 Roles and Permissions
 
