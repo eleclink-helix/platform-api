@@ -17,7 +17,7 @@
 
 ---
 
-The **Platform API** is a REST-style HTTP API operating mostly with JSON payloads. The [OpenAPI](https://www.openapis.org/) specification contains every endpoint that is available for Participants to consume. Endpoints are identified and referred to by their _Operation ID_ e.g. `getNominations` throughout the documentation, the terms "endpoint" and "operation" used interchangeably.
+The **Platform API** is a REST-style HTTP API (also offering _webhook_ functionality) operating mostly with JSON payloads. The [OpenAPI](https://www.openapis.org/) specification contains every endpoint that is available for Participants to consume. Endpoints are identified and referred to by their _Operation ID_ e.g. `getNominations` throughout the documentation, the terms "endpoint" and "operation" used interchangeably.
 
 **Helix** is being developed in an _API-first approach_. The [semantically versioned](https://semver.org/) specification is used internally to generate code in order to make sure that the API contract is matched with the backend implementation. Consumers of the API are also encouraged to utilise code generation to achieve consistent communication using each version of the contract.
 
@@ -37,6 +37,7 @@ The **Platform API** is a REST-style HTTP API operating mostly with JSON payload
   - [👥 Roles and Permissions](#-roles-and-permissions)
   - [⛔ Errors and Validations](#-errors-and-validations)
   - [📊 Data Formats](#-data-formats)
+  - [🪝 Webhooks](#-webhooks)
 * [🐍 Python Client SDK](#-python-client-sdk)
 * [📖 Changelog](#-changelog)
 
@@ -127,7 +128,7 @@ As highlighted in the JSON response, the _Participant ID_ is the value in the `u
 
 The _Partcipant ID_ can be treated as a **constant** in your integrations, it won't ever change in **Helix**.
 
-> ⚠️ Please note, as with any ID in system the (e.g. User IDs, Auction IDs, etc) _Participant IDs_ are **NOT necessarily the same** across different [environments](#-environments), so make sure you always use the appropriate ID in your requests.
+> ⚠️ Please note, as with any ID in the system the (e.g. User IDs, Auction IDs, etc) _Participant IDs_ are **NOT necessarily the same** across different [environments](#-environments), so make sure you always use the appropriate ID in your requests.
 
 ### 👥 Roles and Permissions
 
@@ -272,6 +273,12 @@ Capacity values throughout the **Platform API** are represented with the `#/comp
 **Currency values**
 
 Currency values (as seen in `#/components/schemas/Currency`) are defined as **decimal numbers** with a precision of maximum 2 decimal places, and interpreted in **Euros (€)**.
+
+### 🪝 Webhooks
+
+A _webhook_ is an event-driven, automated way for a service (in this case **Helix**) to send real-time data to another service when a specific event occurs, using a standard HTTP request. It _eliminates the need for constant polling_, making the change detection process efficient and instant.
+
+**Helix** offers various event-driven _Webhooks_ described in detail in the respective [Wiki page](https://github.com/eleclink-helix/platform-api/wiki/Webhooks).
 
 ## 🐍 Python Client SDK
 ​
