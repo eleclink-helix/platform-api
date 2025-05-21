@@ -1,3 +1,15 @@
+## [1.1.0](https://github.com/eleclink-helix/platform-api/compare/v1.0.0...v1.1.0) (2025-05-21)
+
+
+### Features
+
+* **nomination-gates:** add nomination gate close at time to lt, da, id gates
+* **transmission-rights:** add curtailed and remaining attr for transmission rights overview
+* **webhooks:** added webhook management endpoints
+* **webhooks:** added webhook requests and responses
+* **webhooks:** modified transmission rights received webhook request
+* change openapi version to 3.1.1
+
 ## [1.0.0](https://github.com/eleclink-helix/platform-api/compare/v0.0.131...v1.0.0) (2025-03-24)
 
 > No changes affecting Participants.

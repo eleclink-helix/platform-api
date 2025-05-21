@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.1.1
 info:
   title: Platform API
   description: |
@@ -7,12 +7,12 @@ info:
     ---
 
     Additional documentation available in the API's [GitHub repository](https://github.com/eleclink-helix/platform-api)
-  version: 1.0.0
+  version: 1.1.0
   contact:
     name: ElecLink
     url: https://www.eleclink.co.uk
     email: team.eleclink@eleclink.co.uk
-  termsOfService: TBD
+  termsOfService: https://eleclink.co.uk/customers/document-library
 servers:
   - description: PRODUCTION
     url: https://api.helix.eleclink.co.uk
@@ -51,6 +51,8 @@ tags:
     description: Transmission Rights
   - name: user
     description: Users
+  - name: webhook
+    description: Webhooks
 paths:
   /v1/public/version:
     get:
@@ -2854,6 +2856,187 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+webhooks:
+  transmissionRightsReceived:
+    post:
+      operationId: transmissionRightsReceived
+      description: |
+        Fired when a Transmission Rights file received from JAO
+      tags:
+        - webhook
+      parameters:
+        - $ref: '#/components/parameters/WebhookEventType'
+        - $ref: '#/components/parameters/WebhookTimestamp'
+        - $ref: '#/components/parameters/WebhookSignature'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransmissionRightsReceivedRequest'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+  longTermTransmissionRightsCurtailed:
+    post:
+      operationId: longTermTransmissionRightsCurtailed
+      description: |
+        Fired when a Long Term Transmission Rights Curtailment happened
+      tags:
+        - webhook
+      parameters:
+        - $ref: '#/components/parameters/WebhookEventType'
+        - $ref: '#/components/parameters/WebhookTimestamp'
+        - $ref: '#/components/parameters/WebhookSignature'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LongTermTransmissionRightsCurtailedRequest'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+  unplannedOutageCreated:
+    post:
+      operationId: unplannedOutageCreated
+      description: |
+        Fired when an Unplanned Outage created
+      tags:
+        - webhook
+      parameters:
+        - $ref: '#/components/parameters/WebhookEventType'
+        - $ref: '#/components/parameters/WebhookTimestamp'
+        - $ref: '#/components/parameters/WebhookSignature'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnplannedOutageChangedRequest'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+  unplannedOutageUpdated:
+    post:
+      operationId: unplannedOutageUpdated
+      description: |
+        Fired when an Unplanned Outage updated
+      tags:
+        - webhook
+      parameters:
+        - $ref: '#/components/parameters/WebhookEventType'
+        - $ref: '#/components/parameters/WebhookTimestamp'
+        - $ref: '#/components/parameters/WebhookSignature'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnplannedOutageChangedRequest'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+  unplannedOutageEnded:
+    post:
+      operationId: unplannedOutageEnded
+      description: |
+        Fired when an Unplanned Outage ended
+      tags:
+        - webhook
+      parameters:
+        - $ref: '#/components/parameters/WebhookEventType'
+        - $ref: '#/components/parameters/WebhookTimestamp'
+        - $ref: '#/components/parameters/WebhookSignature'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnplannedOutageChangedRequest'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+  nominationGateOpened:
+    post:
+      operationId: nominationGateOpened
+      description: |
+        Fired when a Nomination Gate got opened
+      tags:
+        - webhook
+      parameters:
+        - $ref: '#/components/parameters/WebhookEventType'
+        - $ref: '#/components/parameters/WebhookTimestamp'
+        - $ref: '#/components/parameters/WebhookSignature'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NominationGateOpenedRequest'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+  nominationGateCancelled:
+    post:
+      operationId: nominationGateCancelled
+      description: |
+        Fired when a Nomination Gate got cancelled
+      tags:
+        - webhook
+      parameters:
+        - $ref: '#/components/parameters/WebhookEventType'
+        - $ref: '#/components/parameters/WebhookTimestamp'
+        - $ref: '#/components/parameters/WebhookSignature'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NominationGateCancelledRequest'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+  nominationGateRescheduled:
+    post:
+      operationId: nominationGateRescheduled
+      description: |
+        Fired when a Nomination Gate got rescheduled
+      tags:
+        - webhook
+      parameters:
+        - $ref: '#/components/parameters/WebhookEventType'
+        - $ref: '#/components/parameters/WebhookTimestamp'
+        - $ref: '#/components/parameters/WebhookSignature'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NominationGateRescheduledRequest'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+  webhookTested:
+    post:
+      operationId: webhookTested
+      description: |
+        Fired when the `testWebhook` operation got triggered from the UI or through the API
+      tags:
+        - webhook
+      parameters:
+        - $ref: '#/components/parameters/WebhookEventType'
+        - $ref: '#/components/parameters/WebhookTimestamp'
+        - $ref: '#/components/parameters/WebhookSignature'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookTestedRequest'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
 components:
   schemas:
     AggregatedNominationOptions:
@@ -3056,10 +3239,12 @@ components:
         - PROFILE
         - PARTICIPANT_DASHBOARD
         - BPP
+        - MESSAGES
         - MANUAL_FILE_UPLOAD
         - BUSINESS_SETTINGS
         - BUSINESS_PROCESSES
         - DATA_FLOWS
+        - AUTHENTICATION
     AuditLogPayload:
       type: object
       required:
@@ -3127,6 +3312,7 @@ components:
         - SUBMIT_BPP_PURCHASE_FORM
         - SET_BPP_SUBMISSION_STATUS
         - RESUBMIT_BPP_SUBMISSION
+        - POST_MANUAL_MESSAGE
         - UPLOAD_NOMINATIONS
         - UPDATE_LONG_TERM_OR_DAY_AHEAD_NOMINATION_WINDOWS_BUSINESS_SETTINGS
         - UPDATE_INTRA_DAY_NOMINATION_WINDOWS_BUSINESS_SETTINGS
@@ -3139,6 +3325,13 @@ components:
         - PROCESS_DATA_FLOW_VERSION
         - CREATE_DATA_FLOW
         - UPDATE_DATA_FLOW
+        - CREATE_WEBHOOK
+        - UPDATE_WEBHOOK
+        - DELETE_WEBHOOK
+        - TEST_WEBHOOK
+        - LOGIN_USER
+        - LOGOUT_USER
+        - UPDATE_USER_PASSWORD
     AuditLogUser:
       type: object
       required:
@@ -3266,8 +3459,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/BusinessProcessStepAttempt'
-        file:
-          $ref: '#/components/schemas/Attachment'
+        dataFlowVersionId:
+          $ref: '#/components/schemas/Identifier'
     BusinessProcessStepLogicType:
       type: string
       enum:
@@ -3399,6 +3592,21 @@ components:
         - ISO 8601 compliant string in `yyyy-mm-ddThh:mm:ss.SSSZ` format
       format: date-time
       example: '2022-01-04T00:00:00.000Z'
+    DateTimePeriod:
+      type: object
+      description: |
+        Period of date and time, marked by two absolute points in time
+
+        - the start of the period is inclusive, while the end of the period is exclusive
+        - interpreted as: start <= VALUE < end
+      required:
+        - start
+        - end
+      properties:
+        start:
+          $ref: '#/components/schemas/DateTime'
+        end:
+          $ref: '#/components/schemas/DateTime'
     DefaultNomination:
       type: object
       required:
@@ -3592,7 +3800,6 @@ components:
         - INVALID_RESPONSE_CAPACITY
         - INVALID_RESPONSE_PRICE
         - INVALID_RETURN_CAPACITY
-        - RETURNS_WINDOW_CLOSED
         - INVALID_STATUS
         - INVALID_SUBMISSION_ID
         - INVALID_TARGET_NTC_VALUE
@@ -3600,8 +3807,10 @@ components:
         - INVALID_TRANSFER_CAPACITY
         - INVALID_TSO_ID
         - INVALID_UNPLANNED_OUTAGE_ID
+        - INVALID_URL_PROTOCOL
         - INVALID_USER_ID
         - INVALID_VIRTUAL_WORKFLOW_ID
+        - INVALID_WEBHOOK_EVENT
         - INVALID_WORKFLOW_TYPE_ID
         - LAST_DAY_TOO_LATE
         - LONG_TERM_DELIVERY_PERIOD_MISMATCH
@@ -3657,6 +3866,7 @@ components:
         - PRODUCT_TYPE_MISMATCH
         - REPORTING_PERIOD_OVERLAP
         - REPORT_GENERATION_ERROR
+        - RETURNS_WINDOW_CLOSED
         - ROLE_MISMATCH
         - SCHEMA_MISMATCH
         - SCHEMA_VALIDATION_ERROR
@@ -3666,11 +3876,13 @@ components:
         - TIMESCALE_MISMATCH
         - TOO_MANY_BIDS
         - TOO_MANY_PERIODS
+        - TOO_MANY_WEBHOOKS
         - TRANSFER_DATE_PERIOD_TOO_LONG
         - TRANCHE_SIZE_MISMATCH
         - UNAUTHORIZED
         - UNDER_MTU_SIZE_MINIMUM
         - UPDATE_DEADLINE_MISSED
+        - URL_NOT_UNIQUE
         - VALIDITY_PERIOD_MISMATCH
         - VAT_NUMBER_MISSING
         - VAT_RATE_MARKET_MISMATCH
@@ -3727,6 +3939,7 @@ components:
         - deliveryDay
         - mtu
         - status
+        - closesAt
       properties:
         id:
           $ref: '#/components/schemas/BusinessProcessWorkflowVirtualId'
@@ -3741,6 +3954,8 @@ components:
         status:
           $ref: '#/components/schemas/NominationGateStatus'
         nextActionAt:
+          $ref: '#/components/schemas/DateTime'
+        closesAt:
           $ref: '#/components/schemas/DateTime'
     IntraDayNominationGates:
       type: object
@@ -3793,6 +4008,7 @@ components:
         - deliveryDay
         - timescale
         - status
+        - closesAt
       properties:
         deliveryDay:
           $ref: '#/components/schemas/Date'
@@ -3802,6 +4018,50 @@ components:
           $ref: '#/components/schemas/NominationGateStatus'
         nextActionAt:
           $ref: '#/components/schemas/DateTime'
+        closesAt:
+          $ref: '#/components/schemas/DateTime'
+    LongTermTransmissionRightsCurtailedRequest:
+      type: object
+      required:
+        - eventType
+        - id
+        - deliveryDay
+        - mtus
+      properties:
+        eventType:
+          $ref: '#/components/schemas/WebhookEventType'
+        id:
+          type: string
+        deliveryDay:
+          $ref: '#/components/schemas/Date'
+        mtus:
+          type: array
+          items:
+            type: object
+            required:
+              - mtu
+              - values
+            properties:
+              mtu:
+                $ref: '#/components/schemas/MtuStart'
+              values:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - direction
+                    - total
+                    - curtailed
+                    - remaining
+                  properties:
+                    direction:
+                      $ref: '#/components/schemas/BorderDirection'
+                    total:
+                      $ref: '#/components/schemas/Capacity'
+                    curtailed:
+                      $ref: '#/components/schemas/Capacity'
+                    remaining:
+                      $ref: '#/components/schemas/Capacity'
     ManualFileUploadRequest:
       type: object
       required:
@@ -3834,9 +4094,9 @@ components:
         type:
           $ref: '#/components/schemas/MessageType'
         subject:
-          type: string
+          $ref: '#/components/schemas/MessageSubject'
         body:
-          type: string
+          $ref: '#/components/schemas/MessageBody'
         read:
           type: boolean
         entityId:
@@ -3855,6 +4115,10 @@ components:
             $ref: '#/components/schemas/Message'
         totalCount:
           $ref: '#/components/schemas/Count'
+    MessageBody:
+      type: string
+      minLength: 1
+      maxLength: 20000
     MessageCategory:
       type: string
       enum:
@@ -3884,6 +4148,10 @@ components:
         - TYPE_DESC
         - RECEIVED_AT_ASC
         - RECEIVED_AT_DESC
+    MessageSubject:
+      type: string
+      minLength: 1
+      maxLength: 200
     MessageType:
       type: string
       enum:
@@ -3972,6 +4240,83 @@ components:
         - RES_100_KW
         - RES_500_KW
         - RES_1_MW
+    NominationGateCancelledRequest:
+      type: object
+      required:
+        - eventType
+        - id
+        - timescale
+        - deliveryDay
+      properties:
+        eventType:
+          $ref: '#/components/schemas/WebhookEventType'
+        id:
+          $ref: '#/components/schemas/BusinessProcessWorkflowVirtualId'
+        timescale:
+          $ref: '#/components/schemas/Timescale'
+        deliveryDay:
+          $ref: '#/components/schemas/Date'
+        mtus:
+          type: array
+          items:
+            $ref: '#/components/schemas/NominationGateMtuStatus'
+    NominationGateMtuStatus:
+      type: object
+      required:
+        - mtu
+        - status
+      properties:
+        mtu:
+          $ref: '#/components/schemas/MtuStart'
+        status:
+          $ref: '#/components/schemas/NominationGateStatus'
+    NominationGateOpenedRequest:
+      type: object
+      required:
+        - eventType
+        - id
+        - timescale
+        - deliveryDay
+      properties:
+        eventType:
+          $ref: '#/components/schemas/WebhookEventType'
+        id:
+          $ref: '#/components/schemas/BusinessProcessWorkflowVirtualId'
+        timescale:
+          $ref: '#/components/schemas/Timescale'
+        deliveryDay:
+          $ref: '#/components/schemas/Date'
+        mtu:
+          $ref: '#/components/schemas/NominationGateMtuStatus'
+    NominationGateRescheduledRequest:
+      type: object
+      required:
+        - eventType
+        - id
+        - timescale
+        - deliveryDay
+        - newTimes
+      properties:
+        eventType:
+          $ref: '#/components/schemas/WebhookEventType'
+        id:
+          $ref: '#/components/schemas/BusinessProcessWorkflowVirtualId'
+        timescale:
+          $ref: '#/components/schemas/Timescale'
+        deliveryDay:
+          $ref: '#/components/schemas/Date'
+        mtu:
+          $ref: '#/components/schemas/MtuStart'
+        newTimes:
+          type: object
+          required:
+            - openTime
+            - closeTime
+          properties:
+            openTime:
+              $ref: '#/components/schemas/MtuStart'
+            closeTime:
+              $ref: '#/components/schemas/MtuStart'
     NominationGateStatus:
       type: string
       enum:
@@ -4237,6 +4582,7 @@ components:
           type: array
           items:
             type: object
+            title: ParticipantDashboardInterconnectorCapacityGraphDataMtus
             required:
               - mtu
               - values
@@ -4296,6 +4642,7 @@ components:
           type: array
           items:
             type: object
+            title: ParticipantDashboardNettedNominationsDataMtus
             required:
               - mtu
               - aggregatedNominations
@@ -4544,6 +4891,11 @@ components:
         - VIEW_GENERAL_SYSTEM_MESSAGES
         - VIEW_OPERATIONAL_SYSTEM_MESSAGES
         - VIEW_PARTICIPANT_MESSAGES
+        - MANAGE_MANUAL_MESSAGES
+        - VIEW_OWN_WEBHOOKS
+        - VIEW_ANY_WEBHOOKS
+        - MANAGE_OWN_WEBHOOKS
+        - MANAGE_ANY_WEBHOOKS
         - VIEW_BPP
         - MANAGE_BPP
         - VIEW_BUSINESS_PROCESSES
@@ -4559,6 +4911,7 @@ components:
         - MANAGE_BUSINESS_SETTINGS
         - VIEW_PROTECTED_CONFIG_VARIABLES
         - VIEW_HELP_FAQ
+        - MANAGE_API_KEYS
     PhoneNumber:
       type: string
       format: phone-number
@@ -4871,6 +5224,103 @@ components:
                             $ref: '#/components/schemas/Capacity'
                     total:
                       $ref: '#/components/schemas/Capacity'
+                    curtailed:
+                      $ref: '#/components/schemas/Capacity'
+                    remaining:
+                      $ref: '#/components/schemas/Capacity'
+    TransmissionRightsReceivedRequest:
+      type: object
+      required:
+        - eventType
+        - timescale
+        - deliveryDay
+        - rights
+      properties:
+        eventType:
+          $ref: '#/components/schemas/WebhookEventType'
+        timescale:
+          $ref: '#/components/schemas/Timescale'
+        deliveryDay:
+          $ref: '#/components/schemas/Date'
+        rights:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - direction
+              - mtus
+            properties:
+              id:
+                type: string
+              direction:
+                $ref: '#/components/schemas/BorderDirection'
+              mtus:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - mtu
+                    - value
+                  properties:
+                    mtu:
+                      $ref: '#/components/schemas/MtuStart'
+                    value:
+                      $ref: '#/components/schemas/Capacity'
+    UnplannedOutageChangedRequest:
+      type: object
+      required:
+        - eventType
+        - id
+        - reasonCode
+        - status
+        - periods
+      properties:
+        eventType:
+          $ref: '#/components/schemas/WebhookEventType'
+        id:
+          $ref: '#/components/schemas/Identifier'
+        reasonCode:
+          $ref: '#/components/schemas/UnplannedOutageReasonCode'
+        status:
+          $ref: '#/components/schemas/UnplannedOutageStatus'
+        periods:
+          type: array
+          items:
+            type: object
+            required:
+              - reportingPeriod
+              - mtuPeriod
+              - values
+            properties:
+              reportingPeriod:
+                $ref: '#/components/schemas/DateTimePeriod'
+              mtuPeriod:
+                $ref: '#/components/schemas/MtuPeriod'
+              values:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - direction
+                    - ntc
+                  properties:
+                    direction:
+                      $ref: '#/components/schemas/BorderDirection'
+                    ntc:
+                      $ref: '#/components/schemas/Capacity'
+    UnplannedOutageReasonCode:
+      type: string
+      enum:
+        - EMERGENCY_SITUATION
+        - FORCE_MAJEURE
+        - BREACH_OF_OPERATIONAL_SECURITY_LIMITS
+    UnplannedOutageStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - CANCELLED
+        - ENDED
     UnreadMessagesResponse:
       type: object
       required:
@@ -4985,6 +5435,8 @@ components:
       enum:
         - ICO_ADMIN
         - ICO_CURTAILMENT_MANAGER
+        - ICO_SENIOR_SERVICE_OPS_AGENT
+        - ICO_SERVICE_OPS_AGENT
         - ICO_VIEW
         - PART_ADMIN
         - PART_NOMINATOR
@@ -5004,6 +5456,28 @@ components:
         version:
           type: string
         apiVersion:
+          type: string
+    WebhookEventType:
+      type: string
+      enum:
+        - TRANSMISSION_RIGHTS_RECEIVED
+        - LONG_TERM_TRANSMISSION_RIGHTS_CURTAILED
+        - UNPLANNED_OUTAGE_CREATED
+        - UNPLANNED_OUTAGE_UPDATED
+        - UNPLANNED_OUTAGE_ENDED
+        - NOMINATION_GATE_OPENED
+        - NOMINATION_GATE_CANCELLED
+        - NOMINATION_GATE_RESCHEDULED
+        - WEBHOOK_TESTED
+    WebhookTestedRequest:
+      type: object
+      required:
+        - eventType
+        - message
+      properties:
+        eventType:
+          $ref: '#/components/schemas/WebhookEventType'
+        message:
           type: string
   responses:
     Unauthorized:
@@ -5061,6 +5535,27 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/TimescaleNominationType'
+    WebhookEventType:
+      in: header
+      name: X-Webhook-Event-Type
+      required: true
+      description: Type of the Event being triggered
+      schema:
+        $ref: '#/components/schemas/WebhookEventType'
+    WebhookTimestamp:
+      in: header
+      name: X-Webhook-Timestamp
+      required: true
+      description: Unix timestamp (seconds) when the event was triggered
+      schema:
+        type: string
+    WebhookSignature:
+      in: header
+      name: X-Webhook-Signature
+      required: true
+      description: HMAC-SHA256 signature for the request
+      schema:
+        type: string
     PageLimit:
       in: query
       name: limit
