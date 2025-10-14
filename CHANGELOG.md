@@ -1,3 +1,11 @@
+## [1.2.0](https://github.com/eleclink-helix/platform-api/compare/v1.1.0...v1.2.0) (2025-10-14)
+
+
+### Features
+
+* **profile:** add maxApiKeyCount to the api-keys response
+* **public-overview:** add timescale filter for getPublicPlatformOverview
+
 ## [1.1.0](https://github.com/eleclink-helix/platform-api/compare/v1.0.0...v1.1.0) (2025-05-21)
 
 

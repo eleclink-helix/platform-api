@@ -7,7 +7,7 @@ info:
     ---
 
     Additional documentation available in the API's [GitHub repository](https://github.com/eleclink-helix/platform-api)
-  version: 1.1.0
+  version: 1.2.0
   contact:
     name: ElecLink
     url: https://www.eleclink.co.uk
@@ -1919,6 +1919,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DeliveryDay'
         - $ref: '#/components/parameters/MtuSize'
+        - $ref: '#/components/parameters/TimescalesOptional'
       responses:
         '200':
           description: __OK__
@@ -3236,6 +3237,7 @@ components:
         - ATTACHMENTS
         - ORGANISATIONS
         - USERS
+        - EXTERNAL_USERS
         - PROFILE
         - PARTICIPANT_DASHBOARD
         - BPP
@@ -3288,9 +3290,7 @@ components:
         - CANCEL_INTRA_DAY_NOMINATION_GATES
         - RESEND_CRISIS_REMIT
         - BYPASS_CRISIS_REMIT
-        - COMPLETE_CRISIS_STATIC_TASK
         - EXECUTE_CRISIS_CURTAILMENT
-        - DISMISS_CRISIS_BPP
         - POST_CRISIS_PARTICIPANT_MESSAGE
         - UPLOAD_ATTACHMENT
         - CREATE_PARTICIPANT_ORGANISATION
@@ -3304,6 +3304,9 @@ components:
         - UNSUSPEND_USER
         - RESET_USER_SECOND_AUTH_FACTOR
         - IMPERSONATE_USER
+        - CREATE_EXTERNAL_USER
+        - UPDATE_EXTERNAL_USER
+        - DELETE_EXTERNAL_USER
         - UPDATE_PROFILE_DETAILS
         - UPDATE_PREFERENCES
         - CREATE_API_KEY
@@ -3709,12 +3712,14 @@ components:
       type: string
       format: email
       pattern: ^[\w-\.]+@([\w-]+\.)+[\w-]{2,6}$
+      example: example@example.com
     ErrorCode:
       type: string
       enum:
         - ACTIVE_UNPLANNED_OUTAGE_EXISTS
         - ALREADY_EXPIRED
         - API_CONTRACT_VALIDATION_ERROR
+        - API_KEY_LIMIT_EXCEEDED
         - API_KEY_NAME_NOT_UNIQUE
         - AUCTION_BATCH_CREATE_UNAVAILABLE
         - AUCTION_RESULTS_NOT_AVAILABLE
@@ -3870,7 +3875,6 @@ components:
         - ROLE_MISMATCH
         - SCHEMA_MISMATCH
         - SCHEMA_VALIDATION_ERROR
-        - STATIC_TASK_ALREADY_COMPLETED
         - STATUS_MISMATCH
         - TARGET_NTC_MISSING
         - TIMESCALE_MISMATCH
@@ -3912,6 +3916,22 @@ components:
           type: string
     FileName:
       type: string
+    GeneralNotifications:
+      type: object
+      required:
+        - criticalAlert
+        - critical
+        - major
+        - normal
+      properties:
+        criticalAlert:
+          $ref: '#/components/schemas/NotificationPreferenceWithSms'
+        critical:
+          $ref: '#/components/schemas/NotificationPreference'
+        major:
+          $ref: '#/components/schemas/NotificationPreference'
+        normal:
+          $ref: '#/components/schemas/NotificationPreference'
     Identifier:
       type: string
       description: Unique identifier for the record in UUID4 format
@@ -4886,6 +4906,8 @@ components:
         - INVITE_OWN_USERS
         - INVITE_ANY_USERS
         - IMPERSONATE_USERS
+        - MANAGE_EXTERNAL_USERS
+        - VIEW_EXTERNAL_USERS
         - VIEW_ICO_DASHBOARD
         - VIEW_PARTICIPANT_DASHBOARD
         - VIEW_GENERAL_SYSTEM_MESSAGES
@@ -5413,21 +5435,7 @@ components:
         - appearance
       properties:
         generalNotifications:
-          type: object
-          required:
-            - criticalAlert
-            - critical
-            - major
-            - normal
-          properties:
-            criticalAlert:
-              $ref: '#/components/schemas/NotificationPreferenceWithSms'
-            critical:
-              $ref: '#/components/schemas/NotificationPreference'
-            major:
-              $ref: '#/components/schemas/NotificationPreference'
-            normal:
-              $ref: '#/components/schemas/NotificationPreference'
+          $ref: '#/components/schemas/GeneralNotifications'
         appearance:
           $ref: '#/components/schemas/PlatformAppearance'
     UserRole:
@@ -5607,6 +5615,14 @@ components:
         type: array
         items:
           $ref: '#/components/schemas/Identifier'
+    TimescalesOptional:
+      in: query
+      name: timescales
+      description: List of Timescales (optional)
+      schema:
+        type: array
+        items:
+          $ref: '#/components/schemas/Timescale'
     PageOffset:
       in: query
       name: offset
