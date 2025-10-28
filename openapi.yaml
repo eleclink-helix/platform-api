@@ -7,7 +7,7 @@ info:
     ---
 
     Additional documentation available in the API's [GitHub repository](https://github.com/eleclink-helix/platform-api)
-  version: 1.2.0
+  version: 1.2.1
   contact:
     name: ElecLink
     url: https://www.eleclink.co.uk
