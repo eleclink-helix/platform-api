@@ -1,3 +1,10 @@
+### [1.3.0](https://github.com/eleclink-helix/platform-api/compare/v1.2.1...v1.3.0) (2026-06-29)
+
+### Features
+
+* add separate flags to organisation settings for including participant in GB or FR DMV report
+
+
 ### [1.2.1](https://github.com/eleclink-helix/platform-api/compare/v1.2.0...v1.2.1) (2025-10-28)
 
 > No changes affecting Participants.
